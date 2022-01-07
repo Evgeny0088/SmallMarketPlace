@@ -1,8 +1,6 @@
 --liquibase formatted sql
 --changeset ek:create-itemsbefore-test splitStatements=true endDelimiter:;
 
-SET FOREIGN_KEY_CHECKS=0;
-
 delete from brands;
 delete from items;
 

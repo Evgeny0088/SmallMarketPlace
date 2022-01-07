@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="SmallMarketPlace@localhost" uuid="b0c85527-7683-466e-88f3-bf4653cfd15a">
-      <driver-ref>mysql.8</driver-ref>
+    <data-source source="LOCAL" name="smallmarketplace@localhost" uuid="3d0c5043-8afc-44d6-b460-83de138a2ee8">
+      <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
-      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://localhost:3306/SmallMarketPlace</jdbc-url>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5432/smallmarketplace</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
+      <time-zone>UTC</time-zone>
     </data-source>
-    <data-source source="LOCAL" name="SmallMarketPlaceTest@localhost" uuid="8b7c846b-4a67-42e8-85b3-04e74aa7e2ae">
-      <driver-ref>mysql.8</driver-ref>
+    <data-source source="LOCAL" name="smallmarketplacetest@localhost" uuid="fb901828-3b1e-48c5-ad99-ef6d014eee21">
+      <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
-      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://localhost:3306/SmallMarketPlaceTest</jdbc-url>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5432/smallmarketplacetest</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
+      <time-zone>UTC</time-zone>
     </data-source>
   </component>
 </project>

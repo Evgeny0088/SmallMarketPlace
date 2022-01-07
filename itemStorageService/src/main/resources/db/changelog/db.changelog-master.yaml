@@ -1,5 +1,6 @@
 databaseChangeLog:
   - include:
-      file: db/changelog/changeSet/create-object-tables.sql
-      file: db/changelog/changeSet/add-constraint-to-parentItem.sql
+      file: db/changelog/changeSet/createTables.sql
       file: db/changelog/changeSet/remove-childItems-from-items-table.sql
+      file: db/changelog/changeSet/insert-initData-into-BrandTable.sql
+      file: db/changelog/changeSet/insert-initData-into-ItemTable.sql
