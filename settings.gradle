@@ -1,3 +1,4 @@
 rootProject.name = 'SmallMarketPlace'
 include 'itemStorageService'
+include 'SaleOrders'
 
