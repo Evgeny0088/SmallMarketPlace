@@ -1,5 +1,6 @@
 package com.marketPlace.itemstorageservice.controller;
 
+import com.marketPlace.itemstorageservice.DTOModels.ItemDetailedInfoDTO;
 import com.marketPlace.itemstorageservice.Models.Item;
 import com.marketPlace.itemstorageservice.Services.ItemService;
 import com.marketPlace.itemstorageservice.utils.Utils;
@@ -24,6 +25,12 @@ public class ItemController {
     public ResponseEntity<List<Item>> allItems(){
         HttpHeaders headers = Utils.httpHeader("list of all items","");
         return ResponseEntity.status(HttpStatus.OK).headers(headers).body(itemService.allItems());
+    }
+
+    @GetMapping("/itemsDTO")
+    public ResponseEntity<List<ItemDetailedInfoDTO>> allDTOItems(){
+        HttpHeaders headers = Utils.httpHeader("list of all items","");
+        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(itemService.dtoList());
     }
 
     @PostMapping("/newItem")

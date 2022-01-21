@@ -1,10 +1,12 @@
 package com.marketPlace.itemstorageservice.Services;
 
+import com.marketPlace.itemstorageservice.DTOModels.ItemDetailedInfoDTO;
 import com.marketPlace.itemstorageservice.Models.BrandName;
 import com.marketPlace.itemstorageservice.Models.Item;
 import com.marketPlace.itemstorageservice.Models.ItemType;
 import com.marketPlace.itemstorageservice.Repositories.BrandNameRepo;
 import com.marketPlace.itemstorageservice.Repositories.ItemRepo;
+import com.marketPlace.itemstorageservice.Repositories.NativeQueryMappingForItemEntity;
 import com.marketPlace.itemstorageservice.exceptions.CustomItemsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,10 @@ public class ItemService implements ItemServiceInterface{
     @Override
     public List<Item> allItems(){
         return itemRepo.findAll();
+    }
+
+    public List<ItemDetailedInfoDTO> dtoList(){
+        return itemRepo.findAllItemsDTO();
     }
 
     @Override

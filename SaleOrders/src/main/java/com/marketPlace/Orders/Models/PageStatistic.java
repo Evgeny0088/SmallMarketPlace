@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Setter
 public class PageStatistic {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     Long id;
     @Column(name = "openpagedate")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

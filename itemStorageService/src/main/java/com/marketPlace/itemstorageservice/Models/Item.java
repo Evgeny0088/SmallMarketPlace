@@ -1,6 +1,7 @@
 package com.marketPlace.itemstorageservice.Models;
 
 import com.fasterxml.jackson.annotation.*;
+import com.marketPlace.itemstorageservice.DTOModels.ItemDetailedInfoDTO;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,6 +17,30 @@ import java.util.Set;
 @Table(name = "items")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @NoArgsConstructor
+@NamedNativeQueries({
+        @NamedNativeQuery(
+                name = "Item.findAllItemsDTO",
+                query = """
+                     select distinct t1.parent_id, t1.serial, t2.children, b.brandname, b.brandversion
+                     from items as t1 left join (select parent_id, item_type, count(id) as children from items
+                     where parent_id is not null group by parent_id,item_type) 
+                     as t2 on t1.parent_id=t2.parent_id 
+                     join brands as b on t1.brand_id=b.id where t2.item_type='ITEM' order by t1.parent_id
+                    """,
+                resultSetMapping = "DTOModels.ItemDetailedInfoDTO"
+        )
+})
+@SqlResultSetMapping(name="DTOModels.ItemDetailedInfoDTO",
+        classes =
+        @ConstructorResult(
+                targetClass = ItemDetailedInfoDTO.class,
+                columns = {
+                        @ColumnResult(name = "parent_id", type = Long.class),
+                        @ColumnResult(name = "serial", type = Long.class),
+                        @ColumnResult(name = "children", type = Long.class),
+                        @ColumnResult(name = "brandname", type = String.class),
+                        @ColumnResult(name = "brandversion", type = String.class)
+                }))
 public class Item {
     @Id
     @Getter
