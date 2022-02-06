@@ -1,25 +1,19 @@
 # get all brand names
-GET http://localhost:8080/itemstorage/v1/items
-Accept: */*
-Content-Type: application/json
-Cache-Control: no-cache
-
-### get all dto items
-GET http://localhost:8080/itemstorage/v1/itemsDTO
+GET http://localhost:8080/itemstorage/api/v1/items
 Accept: */*
 Content-Type: application/json
 Cache-Control: no-cache
 
 ### post new item
-POST http://localhost:8080//itemstorage/v1/newItem
+POST http://localhost:8080/itemstorage/api/v1/newItem
 Content-Type: application/x-www-form-urlencoded
 
 ### update item
-PUT http://localhost:8080//itemstorage/v1/item/update?itemId=""
+PUT http://localhost:8080/itemstorage/api/v1/item/update?itemId=""
 Content-Type: application/x-www-form-urlencoded
 
 ### delete item
-GET http://localhost:8080//itemstorage/v1/item/delete/2
+GET http://localhost:8080/itemstorage/api/v1/item/delete/2
 Accept: */*
 Content-Type: application/json
 Cache-Control: no-cache

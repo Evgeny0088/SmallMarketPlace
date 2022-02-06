@@ -1,7 +1,7 @@
 package com.marketPlace.itemstorageservice.controller;
 
-import com.marketPlace.itemstorageservice.Models.BrandName;
-import com.marketPlace.itemstorageservice.Services.BrandService;
+import com.marketPlace.itemstorageservice.models.BrandName;
+import com.marketPlace.itemstorageservice.services.BrandService;
 import com.marketPlace.itemstorageservice.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;

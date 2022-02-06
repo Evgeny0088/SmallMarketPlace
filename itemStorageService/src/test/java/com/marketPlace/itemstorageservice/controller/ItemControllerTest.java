@@ -1,9 +1,9 @@
 package com.marketPlace.itemstorageservice.controller;
 
-import com.marketPlace.itemstorageservice.Models.BrandName;
-import com.marketPlace.itemstorageservice.Models.Item;
-import com.marketPlace.itemstorageservice.Models.ItemType;
-import com.marketPlace.itemstorageservice.Services.ItemService;
+import com.marketPlace.itemstorageservice.models.BrandName;
+import com.marketPlace.itemstorageservice.models.Item;
+import com.marketPlace.itemstorageservice.models.ItemType;
+import com.marketPlace.itemstorageservice.services.ItemService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
