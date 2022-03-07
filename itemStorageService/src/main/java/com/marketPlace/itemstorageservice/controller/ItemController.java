@@ -1,6 +1,5 @@
 package com.marketPlace.itemstorageservice.controller;
 
-import com.marketPlace.itemstorageservice.DTOModels.ItemDetailedInfoDTO;
 import com.marketPlace.itemstorageservice.models.Item;
 import com.marketPlace.itemstorageservice.services.ItemDetailedDTOService;
 import com.marketPlace.itemstorageservice.services.ItemService;

@@ -1,12 +1,8 @@
-package com.marketPlace.itemstorageservice.DTOModels;
+package com.marketPlace.itemstorageservice.DTOmodels;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-
-import javax.persistence.ColumnResult;
-import javax.persistence.ConstructorResult;
-import javax.persistence.SqlResultSetMapping;
 
 @ToString
 @Setter

@@ -5,10 +5,12 @@ import org.ehcache.Cache;
 import org.ehcache.CacheManager;
 import org.ehcache.config.builders.*;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@EnableCaching
 public class ApplicationConfig {
 
     private final CacheManager cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build(true);
@@ -19,5 +21,4 @@ public class ApplicationConfig {
                 CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, ItemDetailedInfoDTO.class,
                                 ResourcePoolsBuilder.heap(cacheSize)).build());
     }
-
 }

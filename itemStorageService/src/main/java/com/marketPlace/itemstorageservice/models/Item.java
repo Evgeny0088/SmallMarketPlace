@@ -1,7 +1,7 @@
 package com.marketPlace.itemstorageservice.models;
 
 import com.fasterxml.jackson.annotation.*;
-import com.marketPlace.itemstorageservice.DTOModels.ItemDetailedInfoDTO;
+import com.marketPlace.itemstorageservice.DTOmodels.ItemDetailedInfoDTO;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,11 +13,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@Entity
-@Table(name = "items")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-@NoArgsConstructor
-@NamedNativeQueries({
+@NamedNativeQueries
+({
         @NamedNativeQuery(
                 name = "findAllItemsDTO",
                 query = """
@@ -28,6 +25,7 @@ import java.util.Set;
                      where t2.item_type='ITEM' order by t1.parent_id
                     """,
                 resultSetMapping = "DTOModels.ItemDetailedInfoDTO"),
+
         @NamedNativeQuery(
                 name = "getItemDTOByParentId",
                 query = """
@@ -37,18 +35,31 @@ import java.util.Set;
                      join brands as b on t1.brand_id=b.id 
                      where t2.item_type='ITEM' and t2.parent_id=:parent_id                 
                      """,
-                resultSetMapping = "DTOModels.ItemDetailedInfoDTO")})
+                resultSetMapping = "DTOModels.ItemDetailedInfoDTO"),
+
+        @NamedNativeQuery(
+                name = "removeItemsFromPackage",
+                query = """
+                     delete from items where id in 
+                     (select id from items where parent_id=:parent_id order by id limit :items_count)            
+                     """)
+})
 
 @SqlResultSetMapping(name="DTOModels.ItemDetailedInfoDTO",
         classes = @ConstructorResult(
                 targetClass = ItemDetailedInfoDTO.class,
-                    columns = {
+                columns = {
                         @ColumnResult(name = "parent_id", type = Long.class),
                         @ColumnResult(name = "serial", type = Long.class),
                         @ColumnResult(name = "children", type = Long.class),
                         @ColumnResult(name = "brandname", type = String.class),
                         @ColumnResult(name = "brandversion", type = String.class)
                 }))
+
+@Entity
+@Table(name = "items")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@NoArgsConstructor
 public class Item {
     @Id
     @Getter

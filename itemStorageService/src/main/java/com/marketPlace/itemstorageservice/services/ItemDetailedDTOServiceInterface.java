@@ -1,11 +1,10 @@
 package com.marketPlace.itemstorageservice.services;
 
-import com.marketPlace.itemstorageservice.DTOModels.ItemDetailedInfoDTO;
-
 import java.util.List;
+import java.util.Optional;
 
-public interface ItemDetailedDTOServiceInterface {
-
-    List<ItemDetailedInfoDTO> allItems();
-    ItemDetailedInfoDTO getItemDTOByParentId(Long parent_id);
+public interface ItemDetailedDTOServiceInterface<T,R> {
+    List<T> allItems();
+    Optional<T> getUpdatedItemDetailedDTO();
+    void removeItemsFromPackage(R itemSoldDTO);
 }
