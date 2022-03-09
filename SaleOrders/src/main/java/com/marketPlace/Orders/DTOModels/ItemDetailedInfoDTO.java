@@ -8,17 +8,17 @@ import lombok.ToString;
 @Setter
 @Getter
 public class ItemDetailedInfoDTO {
-    private final long itemPackId;
+    private final long itemPackageId;
     private final long serial;
     private final String brandName;
     private final String brandVersion;
-    private long itemCountInPack;
+    private long itemsQuantityInPack;
 
-    public ItemDetailedInfoDTO(long itemPackId, long serial, String brandName, String brandVersion, long itemCountInPack) {
-        this.itemPackId = itemPackId;
+    public ItemDetailedInfoDTO(long itemPackageId, long serial, long itemsQuantityInPack, String brandName, String brandVersion) {
+        this.itemPackageId = itemPackageId;
         this.serial = serial;
+        this.itemsQuantityInPack = itemsQuantityInPack;
         this.brandName = brandName;
         this.brandVersion = brandVersion;
-        this.itemCountInPack = itemCountInPack;
     }
 }

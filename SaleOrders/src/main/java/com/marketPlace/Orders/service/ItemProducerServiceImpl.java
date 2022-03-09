@@ -31,8 +31,8 @@ public class ItemProducerServiceImpl implements ItemProducerService {
     public boolean sendSoldItem(long id, int quantity) {
         if (itemDetailedInfoDTOCache.containsKey(id)){
             ItemDetailedInfoDTO packageOfSoldItems = itemDetailedInfoDTOCache.get(id);
-            long currentQuantity = packageOfSoldItems.getItemCountInPack()-quantity;
-            packageOfSoldItems.setItemCountInPack(currentQuantity<0 ? packageOfSoldItems.getItemCountInPack() : currentQuantity);
+            long currentQuantity = packageOfSoldItems.getItemsQuantityInPack()-quantity;
+            packageOfSoldItems.setItemsQuantityInPack(currentQuantity<0 ? packageOfSoldItems.getItemsQuantityInPack() : currentQuantity);
             ItemSoldDTO soldItems;
             if (currentQuantity<0){
                 soldItems = new ItemSoldDTO(id,(int)currentQuantity);

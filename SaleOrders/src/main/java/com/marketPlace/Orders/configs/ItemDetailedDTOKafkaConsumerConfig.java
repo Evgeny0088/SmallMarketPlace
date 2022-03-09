@@ -33,7 +33,7 @@ public class ItemDetailedDTOKafkaConsumerConfig {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServer);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringJsonMessageConverter.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ItemDetailedDTODeserializer.class);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, consumer_group_id);
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
         return props;
@@ -70,7 +70,7 @@ public class ItemDetailedDTOKafkaConsumerConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerListFactory());
         factory.setBatchListener(false);
-        factory.setMessageConverter(new StringJsonMessageConverter());
+//        factory.setMessageConverter(new StringJsonMessageConverter());
         return factory;
     }
 
@@ -84,7 +84,7 @@ public class ItemDetailedDTOKafkaConsumerConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.setBatchListener(false);
-        factory.setMessageConverter(new StringJsonMessageConverter());
+//        factory.setMessageConverter(new StringJsonMessageConverter());
         return factory;
     }
 
@@ -92,6 +92,7 @@ public class ItemDetailedDTOKafkaConsumerConfig {
     public StringJsonMessageConverter messageConverter(){
         return new StringJsonMessageConverter();
     }
+
     @Bean
     public ItemDetailedDTODeserializer converter() {
         return new ItemDetailedDTODeserializer();

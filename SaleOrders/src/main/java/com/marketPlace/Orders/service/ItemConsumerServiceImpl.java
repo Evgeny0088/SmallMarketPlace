@@ -23,21 +23,18 @@ public class ItemConsumerServiceImpl implements ItemConsumerService<ItemDetailed
 
     @KafkaListener(topics = {"${itemDTO.topic.name_1}"}, groupId = "${spring.kafka.consumer.client-id}", containerFactory = "itemDetailedDTOListConsumerFactory")
     public void receiveAllPackagesFromItemStorage(List<ItemDetailedInfoDTO> itemList) {
-        ItemDetailedInfoDTO t1 = new ItemDetailedInfoDTO(9L,100,"gucci","0.1",3);
-        ItemDetailedInfoDTO t2 = new ItemDetailedInfoDTO(76L,100,"gucci","0.1",2);
-        itemDTOCache.put(t1.getItemPackId(),t1);
-        itemDTOCache.put(t1.getItemPackId(),t2);
-//        itemList.forEach(item-> itemDTOCache.put(item.getItemPackId(),item));
+        itemList.forEach(item-> itemDTOCache.put(item.getItemPackageId(),item));
+        log.info("itemCache is loaded!...{} packages inserted",itemList.size());
     }
 
     @Override
-    @CachePut(value = "ItemDTO-Cache", condition = "#item != null ", key = "#item.itemPackId")
+    @CachePut(value = "ItemDTO-Cache", condition = "#item != null ", key = "#item.itemPackageId")
     @KafkaListener(topics = {"${itemDTO.topic.name_2}", "${itemDTO.topic.name_3}"}, groupId = "${spring.kafka.consumer.client-id}", containerFactory = "itemDetailedDTOConsumerFactory")
     public ItemDetailedInfoDTO updateItemDetailedDTOInCache(ItemDetailedInfoDTO item) {
         if (item != null){
             log.info("ItemDetailedDTO is received >>> {}", item);
         }else {
-            log.warn("no updates from database! ...");
+            log.warn("no updates from itemStorage service! ...");
         }
         return item;
     }

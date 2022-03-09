@@ -14,36 +14,36 @@ import java.util.Objects;
 import java.util.Set;
 
 @NamedNativeQueries
-({
-        @NamedNativeQuery(
-                name = "findAllItemsDTO",
-                query = """
+        ({
+                @NamedNativeQuery(
+                        name = "findAllItemsDTO",
+                        query = """
                      select distinct t1.parent_id, t1.serial, t2.children, b.brandname, b.brandversion from items as t1
                      left join (select parent_id, item_type, count(id) as children from items
                      where parent_id is not null group by parent_id,item_type) as t2 on t1.parent_id=t2.parent_id 
                      join brands as b on t1.brand_id=b.id 
                      where t2.item_type='ITEM' order by t1.parent_id
                     """,
-                resultSetMapping = "DTOModels.ItemDetailedInfoDTO"),
+                        resultSetMapping = "DTOModels.ItemDetailedInfoDTO"),
 
-        @NamedNativeQuery(
-                name = "getItemDTOByParentId",
-                query = """
+                @NamedNativeQuery(
+                        name = "getItemDTOByParentId",
+                        query = """
                      select distinct t1.parent_id, t1.serial, t2.children, b.brandname, b.brandversion from items as t1
                      left join (select parent_id, item_type, count(id) as children from items
                      where parent_id is not null group by parent_id,item_type) as t2 on t1.parent_id=t2.parent_id 
                      join brands as b on t1.brand_id=b.id 
                      where t2.item_type='ITEM' and t2.parent_id=:parent_id                 
                      """,
-                resultSetMapping = "DTOModels.ItemDetailedInfoDTO"),
+                        resultSetMapping = "DTOModels.ItemDetailedInfoDTO"),
 
-        @NamedNativeQuery(
-                name = "removeItemsFromPackage",
-                query = """
+                @NamedNativeQuery(
+                        name = "removeItemsFromPackage",
+                        query = """
                      delete from items where id in 
                      (select id from items where parent_id=:parent_id order by id limit :items_count)            
                      """)
-})
+        })
 
 @SqlResultSetMapping(name="DTOModels.ItemDetailedInfoDTO",
         classes = @ConstructorResult(
