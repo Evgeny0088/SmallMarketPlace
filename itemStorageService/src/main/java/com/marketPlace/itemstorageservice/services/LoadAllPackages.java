@@ -18,12 +18,12 @@ import java.util.List;
 public class LoadAllPackages {
 
     private final KafkaTemplate<String, List<ItemDetailedInfoDTO>> allItemsListProducer;
-    private final ItemDetailedDTOService itemDTOservice;
+    private final ItemDetailedDTOServiceImpl itemDTOservice;
     private final NewTopic allPackagesTopic;
 
     @Autowired
     public LoadAllPackages(KafkaTemplate<String, List<ItemDetailedInfoDTO>> allItemsListProducer,
-                           ItemDetailedDTOService itemDTOservice, @Qualifier("allPackagesTopic") NewTopic allPackagesTopic) {
+                           ItemDetailedDTOServiceImpl itemDTOservice, @Qualifier("allPackagesTopic") NewTopic allPackagesTopic) {
         this.allItemsListProducer = allItemsListProducer;
         this.itemDTOservice = itemDTOservice;
         this.allPackagesTopic = allPackagesTopic;

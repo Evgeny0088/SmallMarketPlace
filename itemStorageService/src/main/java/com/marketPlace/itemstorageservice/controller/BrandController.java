@@ -1,7 +1,7 @@
 package com.marketPlace.itemstorageservice.controller;
 
 import com.marketPlace.itemstorageservice.models.BrandName;
-import com.marketPlace.itemstorageservice.services.BrandService;
+import com.marketPlace.itemstorageservice.services.BrandServiceImpl;
 import com.marketPlace.itemstorageservice.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -17,7 +17,7 @@ import java.util.List;
 public class BrandController {
 
     @Autowired
-    BrandService brandService;
+    BrandServiceImpl brandService;
 
     @GetMapping("/brands")
     public ResponseEntity<List<BrandName>> allBrands(){

@@ -29,7 +29,7 @@ public class ItemServiceDeleteItemTest {
     private BrandNameRepo brandNameRepo;
 
     @InjectMocks
-    ItemService itemService;
+    ItemServiceImpl itemService;
 
     @Test
     @DisplayName("delete item which does not have parent")

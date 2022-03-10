@@ -1,8 +1,9 @@
 package com.marketPlace.itemstorageservice.controller;
 
 import com.marketPlace.itemstorageservice.DTOmodels.ItemDetailedInfoDTO;
-import com.marketPlace.itemstorageservice.services.ItemDetailedDTOService;
-import com.marketPlace.itemstorageservice.services.ItemService;
+import com.marketPlace.itemstorageservice.DTOmodels.ItemSoldDTO;
+import com.marketPlace.itemstorageservice.services.ItemDetailedDTOServiceImpl;
+import com.marketPlace.itemstorageservice.services.ItemServiceImpl;
 import com.marketPlace.itemstorageservice.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -19,11 +20,11 @@ import java.util.Optional;
 @Validated
 public class ItemDTOController {
 
-    ItemService itemService;
-    ItemDetailedDTOService itemDetailedService;
+    ItemServiceImpl itemService;
+    ItemDetailedDTOServiceImpl itemDetailedService;
 
     @Autowired
-    public ItemDTOController(ItemService itemService, ItemDetailedDTOService itemDetailedService) {
+    public ItemDTOController(ItemServiceImpl itemService, ItemDetailedDTOServiceImpl itemDetailedService) {
         this.itemService = itemService;
         this.itemDetailedService = itemDetailedService;
     }
@@ -35,9 +36,19 @@ public class ItemDTOController {
     }
 
     @GetMapping("/itemsDTO/{id}")
-    public ResponseEntity<ItemDetailedInfoDTO> getItemDTO(@Valid @PathVariable("id") Long id){
-        Optional<ItemDetailedInfoDTO> itemDTO = itemDetailedService.getUpdatedItemDetailedDTO();
+    public ResponseEntity<String> getItemDTO(@Valid @PathVariable("id") Long id){
+        ItemDetailedInfoDTO itemDTO = itemDetailedService.getUpdatedItemDetailedDTO(id);
         HttpHeaders headers = Utils.httpHeader("itemDTO","");
-        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(itemDTO.isEmpty() ? null : itemDTO.get());
+        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(itemDTO != null ? itemDTO.toString() : "no updated packages!");
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "itemDTO/deleteSoldItems/{id}")
+    public ResponseEntity<String> itemIsDeleted(@Valid @PathVariable("id") Long package_id,
+                                                @Valid @RequestParam("count") int count){
+        ItemSoldDTO request = new ItemSoldDTO(package_id, count);
+        HttpHeaders headers = Utils.httpHeader("delete item","item is deleted from DB");
+        int removedItems = itemDetailedService.removeItemsFromPackage(request);
+        ItemDetailedInfoDTO updatedItem = itemDetailedService.getUpdatedItemDetailedDTO(package_id);
+        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(removedItems > 0 ? updatedItem.toString() : "package was not updated!");
     }
 }

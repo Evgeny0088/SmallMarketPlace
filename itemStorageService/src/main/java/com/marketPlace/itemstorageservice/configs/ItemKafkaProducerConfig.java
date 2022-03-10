@@ -32,19 +32,10 @@ public class ItemKafkaProducerConfig {
     private String acks;
 
     /*
-    producer factory for transfer all Items from DB
+    producer factory for transfer any updates on Items from database
      */
     @Bean
     public ProducerFactory<String, List<ItemDetailedInfoDTO>> producerListFactory() {
-        Map<String, Object> configProps = producerSetup();
-        return new DefaultKafkaProducerFactory<>(configProps);
-    }
-
-    /*
-    producer factory for transfer updated items (created/updated/deleted)
-     */
-    @Bean
-    public ProducerFactory<String, ItemDetailedInfoDTO> producerFactory() {
         Map<String, Object> configProps = producerSetup();
         return new DefaultKafkaProducerFactory<>(configProps);
     }
@@ -59,20 +50,14 @@ public class ItemKafkaProducerConfig {
     }
 
     @Bean
-    @Qualifier("allItemsListProducer")
-    public KafkaTemplate<String, List<ItemDetailedInfoDTO>> allItemsListProducer() {
+    @Qualifier("ItemDetailedDTOUpdateProducer")
+    public KafkaTemplate<String, List<ItemDetailedInfoDTO>> ItemDetailedDTOUpdateProducer() {
         return new KafkaTemplate<>(producerListFactory());
     }
 
     @Bean
-    @Qualifier("singleItemProducer")
-    public KafkaTemplate<String, ItemDetailedInfoDTO> singleItemProducer() {
-        return new KafkaTemplate<>(producerFactory());
-    }
-
-    @Bean
     @Qualifier("itemCountReductionInPackage")
-    public KafkaTemplate<String, ItemSoldDTO> itemCountReduction(){
+    public KafkaTemplate<String, ItemSoldDTO> itemCountReductionInPackage(){
         return new KafkaTemplate<>(itemCountProducerFactory());
     }
 

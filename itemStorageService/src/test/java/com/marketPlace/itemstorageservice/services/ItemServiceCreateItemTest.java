@@ -34,7 +34,7 @@ class ItemServiceCreateItemTest {
     private BrandNameRepo brandNameRepo;
 
     @InjectMocks
-    ItemService itemService;
+    ItemServiceImpl itemService;
 
     @Test
     @DisplayName("get all items")

@@ -32,7 +32,7 @@ class ItemServiceUpdateItemTest {
     private BrandNameRepo brandNameRepo;
 
     @InjectMocks
-    ItemService itemService;
+    ItemServiceImpl itemService;
 
     @Test
     @DisplayName("update item with inputs where parent is null, new serial, new brand and item type is ITEM")

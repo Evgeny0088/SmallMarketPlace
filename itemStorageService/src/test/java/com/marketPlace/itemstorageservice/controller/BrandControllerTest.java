@@ -1,7 +1,7 @@
 package com.marketPlace.itemstorageservice.controller;
 
 import com.marketPlace.itemstorageservice.models.BrandName;
-import com.marketPlace.itemstorageservice.services.BrandService;
+import com.marketPlace.itemstorageservice.services.BrandServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ class BrandControllerTest {
     ObjectMapper objectMapper;
 
     @MockBean
-    BrandService brandService;
+    BrandServiceImpl brandService;
 
     @Test
     @DisplayName("get all brands")

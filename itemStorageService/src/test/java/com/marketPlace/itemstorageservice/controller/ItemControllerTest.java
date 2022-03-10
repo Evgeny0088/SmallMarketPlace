@@ -3,7 +3,7 @@ package com.marketPlace.itemstorageservice.controller;
 import com.marketPlace.itemstorageservice.models.BrandName;
 import com.marketPlace.itemstorageservice.models.Item;
 import com.marketPlace.itemstorageservice.models.ItemType;
-import com.marketPlace.itemstorageservice.services.ItemService;
+import com.marketPlace.itemstorageservice.services.ItemServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ class ItemControllerTest {
     ObjectMapper objectMapper;
 
     @MockBean
-    ItemService itemService;
+    ItemServiceImpl itemService;
 
     @Test
     @DisplayName("get all items")

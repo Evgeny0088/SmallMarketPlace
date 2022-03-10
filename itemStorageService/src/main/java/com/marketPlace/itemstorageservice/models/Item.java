@@ -40,8 +40,10 @@ import java.util.Set;
                 @NamedNativeQuery(
                         name = "removeItemsFromPackage",
                         query = """
-                     delete from items where id in 
-                     (select id from items where parent_id=:parent_id order by id limit :items_count)            
+                     with childrenTable as
+                     (select id, row_number() over (order by id) as child_row_number from items where parent_id=:parent_id)
+                     delete from items where id in
+                     (select id from childrenTable limit :items_count) and (select max(child_row_number) from childrenTable)>=:items_count        
                      """)
         })
 

@@ -26,7 +26,7 @@ public class BrandServiceTest {
     private BrandNameRepo brandNameRepo;
 
     @InjectMocks
-    BrandService brandService;
+    BrandServiceImpl brandService;
 
     @Test
     @DisplayName("find all brands")

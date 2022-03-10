@@ -19,6 +19,6 @@ public interface ItemRepo extends JpaRepository<Item, Long> {
 
     @Modifying
     @Query(nativeQuery = true,name = "removeItemsFromPackage")
-    void removeItemsFromPackage(@Param("parent_id") Long parent_id, @Param("items_count") Long items_count);
+    int removeItemsFromPackage(@Param("parent_id") Long parent_id, @Param("items_count") Long items_count);
 }
 

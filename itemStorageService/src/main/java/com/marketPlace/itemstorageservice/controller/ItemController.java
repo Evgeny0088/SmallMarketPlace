@@ -1,8 +1,8 @@
 package com.marketPlace.itemstorageservice.controller;
 
 import com.marketPlace.itemstorageservice.models.Item;
-import com.marketPlace.itemstorageservice.services.ItemDetailedDTOService;
-import com.marketPlace.itemstorageservice.services.ItemService;
+import com.marketPlace.itemstorageservice.services.ItemDetailedDTOServiceImpl;
+import com.marketPlace.itemstorageservice.services.ItemServiceImpl;
 import com.marketPlace.itemstorageservice.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -19,10 +19,10 @@ import java.util.List;
 public class ItemController {
 
     @Autowired
-    ItemService itemService;
+    ItemServiceImpl itemService;
 
     @Autowired
-    ItemDetailedDTOService itemDetailedService;
+    ItemDetailedDTOServiceImpl itemDetailedService;
 
     @GetMapping("/items")
     public ResponseEntity<List<Item>> allItems(){

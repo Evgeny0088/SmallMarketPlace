@@ -24,12 +24,12 @@ public class ItemDetailedDTODeserializer implements Deserializer<List<ItemDetail
     @Override
     public List<ItemDetailedInfoDTO> deserialize(String topic, byte[] data){
         List<ItemDetailedInfoDTO> items = new ArrayList<>();
-        if (data == null){
-            log.error("Input data is not available!...");
-            return items;
-        }
         try {
             JsonNode node = mapper.readTree(data);
+            if (node.get(0) == null){
+                log.error("Input data is empty or wrong from ItemStorage service!...");
+                return items;
+            }
             for (int i = 0; i<node.size(); i++){
                 items.add(new ItemDetailedInfoDTO(
                         node.get(i).get("itemPackageId").asLong(),
@@ -44,4 +44,5 @@ public class ItemDetailedDTODeserializer implements Deserializer<List<ItemDetail
         }
         return items;
     }
+
 }

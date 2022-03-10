@@ -3,6 +3,7 @@ package com.marketPlace.Orders.configs;
 import com.marketPlace.Orders.DTOModels.ItemDetailedInfoDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +13,9 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.KafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.support.converter.StringJsonMessageConverter;
+import org.springframework.kafka.listener.ErrorHandler;
+import org.springframework.kafka.listener.KafkaListenerErrorHandler;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -44,57 +47,27 @@ public class ItemDetailedDTOKafkaConsumerConfig {
         return new ConcurrentKafkaListenerContainerFactory<>();
     }
 
-    /*
-    consumer factory for getting ItemDetailedDTO list from database
-     */
     @Bean
-    public ConsumerFactory<String, List<ItemDetailedInfoDTO>> consumerListFactory() {
+    public ConsumerFactory<String, List<ItemDetailedInfoDTO>> consumerFactory() {
         return new DefaultKafkaConsumerFactory<>(consumerConfigs());
     }
 
     /*
-    consumer factory for getting updated ItemDetailedDTO from database (created/updated/deleted)
-     */
-    @Bean
-    public ConsumerFactory<String, ItemDetailedInfoDTO> consumerFactory() {
-        return new DefaultKafkaConsumerFactory<>(consumerConfigs());
-    }
-
-    /*
-    factory for getting ItemDetailedDTO list from database
+    factory for getting any updates of ItemDetailedDTO from itemStorage service database
     */
     @Bean
-    @Qualifier("itemDetailedDTOListConsumerFactory")
-    public KafkaListenerContainerFactory<?> itemDetailedDTOListConsumerFactory() {
+    @Qualifier("ItemDetailedDTOUpdateConsumerFactory")
+    public KafkaListenerContainerFactory<?> ItemDetailedDTOUpdateConsumerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, List<ItemDetailedInfoDTO>> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerListFactory());
-        factory.setBatchListener(false);
-//        factory.setMessageConverter(new StringJsonMessageConverter());
-        return factory;
-    }
-
-    /*
-    factory for getting ItemDetailedDTO from database (created/updated/deleted)
-    */
-    @Bean
-    @Qualifier("itemDetailedDTOConsumerFactory")
-    public KafkaListenerContainerFactory<?> itemDetailedDTOConsumerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, ItemDetailedInfoDTO> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.setBatchListener(false);
-//        factory.setMessageConverter(new StringJsonMessageConverter());
         return factory;
-    }
-
-    @Bean
-    public StringJsonMessageConverter messageConverter(){
-        return new StringJsonMessageConverter();
     }
 
     @Bean
     public ItemDetailedDTODeserializer converter() {
         return new ItemDetailedDTODeserializer();
     }
+
 }
