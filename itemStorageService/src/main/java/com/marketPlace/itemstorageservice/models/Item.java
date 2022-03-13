@@ -18,22 +18,20 @@ import java.util.Set;
                 @NamedNativeQuery(
                         name = "findAllItemsDTO",
                         query = """
-                     select distinct t1.parent_id, t1.serial, t2.children, b.brandname, b.brandversion from items as t1
-                     left join (select parent_id, item_type, count(id) as children from items
-                     where parent_id is not null group by parent_id,item_type) as t2 on t1.parent_id=t2.parent_id 
-                     join brands as b on t1.brand_id=b.id 
-                     where t2.item_type='ITEM' order by t1.parent_id
+                     with t2 as (select id, parent_id, item_type from items)
+                     select t1.id as parent_id, t1.serial, count(case when t2.item_type='ITEM' then t2.parent_id end) as children,
+                     b.brandname, b.brandversion from items as t1 left join t2 on t1.id=t2.parent_id left join brands as b on t1.brand_id=b.id
+                     where t1.item_type='PACK' group by t1.id, t1.serial, b.brandname, b.brandversion
                     """,
                         resultSetMapping = "DTOModels.ItemDetailedInfoDTO"),
 
                 @NamedNativeQuery(
                         name = "getItemDTOByParentId",
                         query = """
-                     select distinct t1.parent_id, t1.serial, t2.children, b.brandname, b.brandversion from items as t1
-                     left join (select parent_id, item_type, count(id) as children from items
-                     where parent_id is not null group by parent_id,item_type) as t2 on t1.parent_id=t2.parent_id 
-                     join brands as b on t1.brand_id=b.id 
-                     where t2.item_type='ITEM' and t2.parent_id=:parent_id                 
+                     with t2 as (select id, parent_id, item_type from items)
+                     select t1.id as parent_id, t1.serial, count(case when t2.item_type='ITEM' then t2.parent_id end) as children,
+                     b.brandname, b.brandversion from items as t1 left join t2 on t1.id=t2.parent_id left join brands as b on t1.brand_id=b.id
+                     where t1.id=:parent_id and t1.item_type='PACK' group by t1.id, t1.serial, b.brandname, b.brandversion            
                      """,
                         resultSetMapping = "DTOModels.ItemDetailedInfoDTO"),
 
@@ -41,7 +39,7 @@ import java.util.Set;
                         name = "removeItemsFromPackage",
                         query = """
                      with childrenTable as
-                     (select id, row_number() over (order by id) as child_row_number from items where parent_id=:parent_id)
+                     (select id, row_number() over (order by id) as child_row_number from items where item_type='ITEM' and parent_id=:parent_id)
                      delete from items where id in
                      (select id from childrenTable limit :items_count) and (select max(child_row_number) from childrenTable)>=:items_count        
                      """)

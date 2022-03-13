@@ -17,11 +17,11 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
 public class ItemProducerServiceImpl implements ItemProducerService {
 
     private final NewTopic itemSold;
-    private final KafkaTemplate<String, ItemSoldDTO> itemSoldTemplate;
+    private final KafkaTemplate<Long, ItemSoldDTO> itemSoldTemplate;
     private final Cache<Long, ItemDetailedInfoDTO> itemDetailedInfoDTOCache;
 
     @Autowired
-    public ItemProducerServiceImpl(NewTopic itemSold, KafkaTemplate<String, ItemSoldDTO> itemSoldTemplate, Cache<Long, ItemDetailedInfoDTO> itemDetailedInfoDTOCache) {
+    public ItemProducerServiceImpl(NewTopic itemSold, KafkaTemplate<Long, ItemSoldDTO> itemSoldTemplate, Cache<Long, ItemDetailedInfoDTO> itemDetailedInfoDTOCache) {
         this.itemSold = itemSold;
         this.itemSoldTemplate = itemSoldTemplate;
         this.itemDetailedInfoDTOCache = itemDetailedInfoDTOCache;
@@ -32,27 +32,26 @@ public class ItemProducerServiceImpl implements ItemProducerService {
         if (itemDetailedInfoDTOCache.containsKey(id)){
             ItemDetailedInfoDTO packageOfSoldItems = itemDetailedInfoDTOCache.get(id);
             long currentQuantity = packageOfSoldItems.getItemsQuantityInPack()-quantity;
-            packageOfSoldItems.setItemsQuantityInPack(currentQuantity<0 ? packageOfSoldItems.getItemsQuantityInPack() : currentQuantity);
-            ItemSoldDTO soldItems;
             if (currentQuantity<0){
-                soldItems = new ItemSoldDTO(id,(int)currentQuantity);
                 log.warn("not enough items in current package: <{}>, need to check in DB...",currentQuantity);
+                return false;
             }else {
-                soldItems = new ItemSoldDTO(id,quantity);
+                packageOfSoldItems.setItemsQuantityInPack(currentQuantity);
+                ItemSoldDTO soldItems = new ItemSoldDTO(id,quantity);
+                ListenableFuture<SendResult<Long, ItemSoldDTO>> future = itemSoldTemplate.send(itemSold.name(), soldItems);
+                future.addCallback(new ListenableFutureCallback<>(){
+                    @Override
+                    public void onSuccess(SendResult<Long, ItemSoldDTO> result) {
+                        log.info("package with id <{}> and sold items quantity <{}> sent successfully!",id,quantity);
+                    }
+                    @Override
+                    public void onFailure(Throwable ex) {
+                        log.info(String.format("message failed to send, see stack trace below:\n%s", ex.getMessage()));
+                    }
+                });
             }
-            ListenableFuture<SendResult<String, ItemSoldDTO>> future = itemSoldTemplate.send(itemSold.name(), soldItems);
-            future.addCallback(new ListenableFutureCallback<>(){
-                @Override
-                public void onSuccess(SendResult<String, ItemSoldDTO> result) {
-                    log.info("package with id <{}> and sold items quantity <{}> sent successfully!",id,quantity);
-                }
-                @Override
-                public void onFailure(Throwable ex) {
-                    log.info(String.format("message failed to send, see stack trace below:\n%s", ex.getMessage()));
-                }
-            });
         }else {
-            log.warn("package with id <{}> does not available in cache >>> ...", id);
+            log.warn("package with id <{}> does not available in SaleOrders service >>> ...", id);
             return false;
         }
         return true;

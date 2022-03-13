@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
+@RequestMapping("itemsDTO")
 @Validated
 public class ItemDTOController {
 
@@ -29,26 +29,26 @@ public class ItemDTOController {
         this.itemDetailedService = itemDetailedService;
     }
 
-    @GetMapping("/itemsDTO")
+    @GetMapping
     public ResponseEntity<List<ItemDetailedInfoDTO>> allDTOItems(){
         HttpHeaders headers = Utils.httpHeader("list of all itemsDTO","");
         return ResponseEntity.status(HttpStatus.OK).headers(headers).body(itemDetailedService.allItems());
     }
 
-    @GetMapping("/itemsDTO/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<String> getItemDTO(@Valid @PathVariable("id") Long id){
         ItemDetailedInfoDTO itemDTO = itemDetailedService.getUpdatedItemDetailedDTO(id);
         HttpHeaders headers = Utils.httpHeader("itemDTO","");
-        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(itemDTO != null ? itemDTO.toString() : "no updated packages!");
+        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(itemDTO != null ? itemDTO.toString() : "package with specified id does not exists!");
     }
 
-    @RequestMapping(method = RequestMethod.GET, value = "itemDTO/deleteSoldItems/{id}")
+    @RequestMapping(method = RequestMethod.GET, value = "/deleteSoldItems/{id}")
     public ResponseEntity<String> itemIsDeleted(@Valid @PathVariable("id") Long package_id,
                                                 @Valid @RequestParam("count") int count){
         ItemSoldDTO request = new ItemSoldDTO(package_id, count);
-        HttpHeaders headers = Utils.httpHeader("delete item","item is deleted from DB");
         int removedItems = itemDetailedService.removeItemsFromPackage(request);
         ItemDetailedInfoDTO updatedItem = itemDetailedService.getUpdatedItemDetailedDTO(package_id);
-        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(removedItems > 0 ? updatedItem.toString() : "package was not updated!");
+        HttpHeaders headers = Utils.httpHeader("sold items","sold items are deleted from DB");
+        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(removedItems > 0 ? updatedItem.toString() : "package is empty or not valid!...");
     }
 }

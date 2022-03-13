@@ -48,7 +48,7 @@ public class ItemOrderController {
         if (itemSoldProduserService.sendSoldItem(id,quantity)){
             return ResponseEntity.status(HttpStatus.OK).headers(header).body("items are sold!...");
         }else {
-            return ResponseEntity.status(HttpStatus.OK).headers(header).body("items are not available now!...");
+            return ResponseEntity.status(HttpStatus.OK).headers(header).body("failed to sold items, probably not enough items in package!...");
         }
     }
 }

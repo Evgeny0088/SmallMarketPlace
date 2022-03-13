@@ -5,7 +5,7 @@ Content-Type: application/json
 Cache-Control: no-cache
 
 ### send message to itemSold topic
-GET http://localhost:8082/saleorder/v1/itemSold/9?quantity=2
+GET http://localhost:8082/saleorder/v1/itemSold/75?quantity=1
 Accept: */*
 Content-Type: application/json
 Cache-Control: no-cache

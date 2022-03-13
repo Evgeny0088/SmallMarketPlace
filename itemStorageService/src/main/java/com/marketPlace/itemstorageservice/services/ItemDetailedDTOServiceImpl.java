@@ -15,15 +15,14 @@ import java.util.Optional;
 
 @Service
 @Slf4j
+@Transactional(isolation = Isolation.REPEATABLE_READ, rollbackFor = RuntimeException.class)
 public class ItemDetailedDTOServiceImpl implements ItemDetailedDTOService<ItemDetailedInfoDTO,ItemSoldDTO> {
 
     private final ItemRepo itemRepo;
-    private Optional<ItemDetailedInfoDTO> updatedItem;
 
     @Autowired
     public ItemDetailedDTOServiceImpl(ItemRepo itemRepo) {
         this.itemRepo = itemRepo;
-        this.updatedItem = Optional.empty();
     }
 
     @Override
@@ -38,14 +37,13 @@ public class ItemDetailedDTOServiceImpl implements ItemDetailedDTOService<ItemDe
     }
 
     @Override
-    @Transactional(isolation = Isolation.REPEATABLE_READ, rollbackFor = RuntimeException.class)
     public int removeItemsFromPackage(ItemSoldDTO itemSoldDTO) {
-        int removedRows = itemRepo.removeItemsFromPackage(itemSoldDTO.packageID(),(long)itemSoldDTO.itemSoldQuantity());
+        int removedRows = itemRepo.removeItemsFromPackage(itemSoldDTO.packageID(), itemSoldDTO.itemSoldQuantity());
         if (removedRows >0 ){
             log.info("{} sold items are removed successfully from database!...",itemSoldDTO.itemSoldQuantity());
         }
         else {
-            log.warn("failed to remove {} items, not enough items in database, please reduce sold items count!...",itemSoldDTO.itemSoldQuantity());
+            log.warn("failed to remove {} items, not enough items in database or package is not valid!...",itemSoldDTO.itemSoldQuantity());
         }
         return removedRows;
     }
@@ -55,11 +53,12 @@ public class ItemDetailedDTOServiceImpl implements ItemDetailedDTOService<ItemDe
         if (request != null){
             log.info("request from SaleOrders server to remove {} sold items from package {} ...",
                     request.itemSoldQuantity(),request.packageID());
-            removeItemsFromPackage(request);
-            return updatedItem = Optional.ofNullable(itemRepo.getItemDTOByParentId(request.packageID()));
+            int soldItems = removeItemsFromPackage(request);
+            ItemDetailedInfoDTO item = itemRepo.getItemDTOByParentId(request.packageID());
+            log.info("package:{}",item.toString());
         }else {
             log.error("wrong request from SaleOrders service, check inputs");
-            return Optional.empty();
         }
+        return Optional.empty();
     }
 }

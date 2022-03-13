@@ -27,7 +27,6 @@ public class ItemDetailedDTODeserializer implements Deserializer<List<ItemDetail
         try {
             JsonNode node = mapper.readTree(data);
             if (node.get(0) == null){
-                log.error("Input data is empty or wrong from ItemStorage service!...");
                 return items;
             }
             for (int i = 0; i<node.size(); i++){
