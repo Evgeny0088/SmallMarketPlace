@@ -1,0 +1,17 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ApiGateway-Service
+  cloud:
+    gateway:
+      routes:
+        - id: ItemStorage-Service
+          uri: lb://ItemStorage-Service
+          predicates:
+            - Path=/**
+        - id: SaleOrders-Service
+          uri: lb://SaleOrders-Service
+          predicates:
+            - Path=/**
