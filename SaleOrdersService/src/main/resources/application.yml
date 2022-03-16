@@ -1,0 +1,8 @@
+server:
+  port: 8082
+  servlet:
+    context-path: /saleorver/api/v1
+
+spring:
+  application:
+    name: SaleOrders-Service

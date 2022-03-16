@@ -1,0 +1,78 @@
+plugins {
+    id 'idea'
+    id 'java'
+    id 'org.springframework.boot' version '2.6.2'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+
+}
+
+group = 'com.marketplace'
+version = '0.1'
+
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+ext {
+    set('springCloudVersion', "2021.0.1")
+}
+
+dependencies {
+    // starters
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'com.mattunderscore:filter-utils:0.2.8'
+    // dev tools
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    // kafka
+    implementation 'org.springframework.kafka:spring-kafka:2.8.3'
+    //lombok
+    compileOnly 'org.projectlombok:lombok:1.18.20'
+    annotationProcessor 'org.projectlombok:lombok'
+    // database
+    implementation 'org.liquibase:liquibase-core'
+    implementation "org.hibernate:hibernate-gradle-plugin:5.6.2.Final"
+    implementation 'org.postgresql:postgresql'
+    // cache
+    implementation 'org.ehcache:ehcache'
+    // logging
+    implementation 'ch.qos.logback:logback-classic'
+    // swagger
+    implementation "org.springdoc:springdoc-openapi-ui:1.6.6"
+    // testing
+    testImplementation "org.testcontainers:kafka:1.16.3"
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "org.junit.jupiter:junit-jupiter-api"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine"
+    testImplementation "org.junit.jupiter:junit-jupiter-params"
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+task ItemStorageService(type: Jar, dependsOn: shadowJar) {
+    archiveBaseName.set('ItemStorageService')
+    archiveVersion.set('0.1')
+    manifest{
+        attributes 'Main-Class': 'com.marketplace.itemstorageservice.ItemStorageServiceApplication.java'
+    }
+    from zipTree(shadowJar.archiveFile)
+}
+
+tasks.build.dependsOn tasks.ItemStorageService
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
