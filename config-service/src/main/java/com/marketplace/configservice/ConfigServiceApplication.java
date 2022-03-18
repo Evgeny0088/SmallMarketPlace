@@ -1,15 +1,16 @@
-package com.marketplace.APIgateway;
+package com.marketplace.configservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.config.server.EnableConfigServer;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
-import org.springframework.cloud.netflix.hystrix.EnableHystrix;
 
 @SpringBootApplication
 @EnableEurekaClient
-@EnableHystrix
-public class ApIgatewayApplication {
+@EnableConfigServer
+public class ConfigServiceApplication {
+
 	public static void main(String[] args) {
-		SpringApplication.run(ApIgatewayApplication.class, args);
+		SpringApplication.run(ConfigServiceApplication.class, args);
 	}
 }

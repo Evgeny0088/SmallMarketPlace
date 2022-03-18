@@ -1,11 +1,11 @@
 # savind open page time in db
-GET http://localhost:8082/saleorders/api/v1/brandsMainPage
+GET http://localhost:8080/saleorders/api/v1/brandsMainPage
 Accept: */*
 Content-Type: application/json
 Cache-Control: no-cache
 
 ### send message to itemSold topic
-GET http://localhost:8082/saleorders/api/v1/itemSold/75?quantity=1
+GET http://localhost:8080/saleorders/api/v1/itemSold/75?quantity=1
 Accept: */*
 Content-Type: application/json
 Cache-Control: no-cache

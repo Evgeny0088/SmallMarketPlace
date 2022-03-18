@@ -1,5 +1,5 @@
 # get all brand names
-GET http://localhost:8081/itemstorage/api/v1/items
+GET http://localhost:8080/itemstorage/api/v1/items
 Accept: */*
 Content-Type: application/json
 Cache-Control: no-cache
@@ -13,7 +13,7 @@ PUT http://localhost:8081/itemstorage/api/v1/items/update?itemId=""
 Content-Type: application/x-www-form-urlencoded
 
 ### delete item
-GET http://localhost:8081/itemstorage/api/v1/items/delete/2
+GET http://localhost:8080/itemstorage/api/v1/items/delete/2
 Accept: */*
 Content-Type: application/json
 Cache-Control: no-cache
