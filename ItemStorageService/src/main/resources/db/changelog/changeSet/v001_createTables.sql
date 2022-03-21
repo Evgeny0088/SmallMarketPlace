@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset ek:createTables splitStatements=true endDelimiter:;
+--changeset ek:v001 splitStatements=true endDelimiter:;
 
 create table brands (
     id bigserial not null primary key,
@@ -16,16 +16,9 @@ create table items(
     item_type varchar(255) not null,
     brand_id bigint not null,
     parent_id bigint,
-    childcount bigint,
     creationdate TimeStamp,
     constraint brandId_id_fk foreign key (brand_id) references brands (id),
     constraint parent_id_fk foreign key (parent_id) references items (id)
 );
 --rollback DROP TABLE
 --rollback items
-create table brandspage(
-    id bigserial not null primary key,
-    openpagedate TimeStamp
-);
---rollback DROP TABLE
---rollback brandspage

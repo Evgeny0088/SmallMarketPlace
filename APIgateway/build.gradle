@@ -1,11 +1,10 @@
 plugins {
+	id 'idea'
 	id 'java'
 	id 'org.springframework.boot' version '2.6.4'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'com.github.johnrengelman.shadow' version '6.1.0' apply true
 }
-
-group = 'com.marketplace'
-version = '0.1'
 
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
@@ -23,7 +22,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j:2.1.1'
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-hystrix:2.2.10.RELEASE'
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-hystrix-dashboard:2.2.10.RELEASE'
 	implementation 'org.springframework.cloud:spring-cloud-config-server'
@@ -37,6 +35,13 @@ dependencyManagement {
 	}
 }
 
-tasks.named('test') {
-	useJUnitPlatform()
+task GatewayService(type: Jar, dependsOn: shadowJar) {
+	archiveBaseName.set('APIgateway')
+	archiveVersion.set('0.1')
+	manifest{
+		attributes 'Main-Class': 'com.marketplace.APIgateway.ApIgatewayApplication'
+	}
+	from zipTree(shadowJar.archiveFile)
 }
+
+tasks.build.dependsOn tasks.GatewayService

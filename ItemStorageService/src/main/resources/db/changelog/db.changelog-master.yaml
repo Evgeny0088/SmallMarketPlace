@@ -1,6 +1,7 @@
 databaseChangeLog:
   - include:
-      file: db/changelog/changeSet/createTables.sql
-      file: db/changelog/changeSet/remove-childItems-from-items-table.sql
-      file: db/changelog/changeSet/insert-initData-into-BrandTable.sql
-      file: db/changelog/changeSet/insert-initData-into-ItemTable.sql
+      file: db/changelog/changeSet/v001_createTables.sql
+  - include:
+      file: db/changelog/changeSet/v002_insert-initData-into-BrandTable.sql
+  - include:
+      file: db/changelog/changeSet/v003_insert-initData-into-ItemTable.sql

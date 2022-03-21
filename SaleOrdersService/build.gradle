@@ -65,16 +65,16 @@ dependencyManagement {
     }
 }
 
-task ItemStorageService(type: Jar, dependsOn: shadowJar) {
-    archiveBaseName.set('ItemStorageService')
+task SaleOrdersService(type: Jar, dependsOn: shadowJar) {
+    archiveBaseName.set('SaleOrdersService')
     archiveVersion.set('0.1')
-    manifest{
-        attributes 'Main-Class': 'com.marketplace.itemstorageservice.ItemStorageServiceApplication.java'
+    manifest {
+        attributes 'Main-Class': 'com.marketplace.orders.SaleOrdersServiceApplication.java'
     }
     from zipTree(shadowJar.archiveFile)
 }
 
-tasks.build.dependsOn tasks.ItemStorageService
+tasks.build.dependsOn tasks.SaleOrdersService
 
 tasks.named('test') {
     useJUnitPlatform()

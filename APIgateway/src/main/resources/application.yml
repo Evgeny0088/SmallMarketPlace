@@ -2,7 +2,7 @@ server:
   port: 8080
 spring:
   application:
-    name: ApiGateway-Service
+    name: gateway-service
   cloud:
     gateway:
       routes:
@@ -14,7 +14,7 @@ spring:
             - name: circuitBreaker
               args:
                 name: ItemStorage-Service
-                fallbackUri: http://localhost:8080/itemstorage/api/v1/*/fallback-for-itemStorageService
+                fallbackUri: forward:/fallback-for-itemStorageService
         - id: SaleOrders-Service
           uri: lb://SaleOrders-Service
           predicates:
@@ -25,9 +25,9 @@ spring:
                 name: SaleOrders-Service
                 fallbackUri: forward:/fallback-for-saleOrdersService
 
-#hystrix:
-#  metrics:
-#    polling-interval-ms: 4000
+hystrix:
+  metrics:
+    polling-interval-ms: 4000
 
 management:
   endpoints:

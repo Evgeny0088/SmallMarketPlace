@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset ek:insert-initData-into-ItemTable splitStatements=true endDelimiter:;
+--changeset ek:v003 splitStatements=true endDelimiter:;
 
 INSERT INTO items (id, serial, item_type, brand_id, parent_id, creationdate) VALUES (72, 100, 'PACK', 4, null, '2021-12-26 06:28:55');
 INSERT INTO items (id, serial, item_type, brand_id, parent_id, creationdate) VALUES (44, 100, 'ITEM', 4, 72, '2021-12-26 07:04:37');
