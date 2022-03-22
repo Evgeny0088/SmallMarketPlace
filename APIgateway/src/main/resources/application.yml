@@ -10,31 +10,23 @@ spring:
           uri: lb://ItemStorage-Service
           predicates:
             - Path=/itemstorage/**
-          filter:
-            - name: circuitBreaker
+          filters:
+            - name: CircuitBreaker
               args:
-                name: ItemStorage-Service
+                name: itemStorageCircuitBreaker
                 fallbackUri: forward:/fallback-for-itemStorageService
         - id: SaleOrders-Service
           uri: lb://SaleOrders-Service
           predicates:
             - Path=/saleorders/**
-          filter:
-            - name: circuitBreaker
+          filters:
+            - name: CircuitBreaker
               args:
-                name: SaleOrders-Service
+                name: saleOrdersCircuitBreaker
                 fallbackUri: forward:/fallback-for-saleOrdersService
-
-hystrix:
-  metrics:
-    polling-interval-ms: 4000
 
 management:
   endpoints:
     web:
       exposure:
         include: "*"
-  endpoint:
-    hystrix:
-      stream:
-        enabled: true
