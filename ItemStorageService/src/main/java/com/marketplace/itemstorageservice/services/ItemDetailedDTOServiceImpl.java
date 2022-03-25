@@ -53,7 +53,7 @@ public class ItemDetailedDTOServiceImpl implements ItemDetailedDTOService<ItemDe
         if (request != null){
             log.info("request from SaleOrders server to remove {} sold items from package {} ...",
                     request.itemSoldQuantity(),request.packageID());
-            int soldItems = removeItemsFromPackage(request);
+            removeItemsFromPackage(request);
             ItemDetailedInfoDTO item = itemRepo.getItemDTOByParentId(request.packageID());
             log.info("package:{}",item.toString());
         }else {

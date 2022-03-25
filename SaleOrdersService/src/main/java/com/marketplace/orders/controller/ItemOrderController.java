@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import org.ehcache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -34,7 +33,6 @@ public class ItemOrderController {
 
     private final PageStatisticService pageStatisticService;
     private final ItemProducerService itemSoldProducerService;
-    private final Cache<Long, ItemDetailedInfoDTO> itemDTOCache;
 
     private static final String notFoundResponse = """
             {
@@ -50,11 +48,9 @@ public class ItemOrderController {
 
     @Autowired
     public ItemOrderController(PageStatisticServiceImpl pageStatisticService,
-                               ItemProducerService itemSoldProducerService,
-                               Cache<Long, ItemDetailedInfoDTO> itemDTOCache) {
+                               ItemProducerService itemSoldProducerService) {
         this.pageStatisticService = pageStatisticService;
         this.itemSoldProducerService = itemSoldProducerService;
-        this.itemDTOCache = itemDTOCache;
     }
 
     @Operation(summary = "fetch all itemDetailedDTO packages available at this service >>> taken from local service cache")
@@ -71,7 +67,6 @@ public class ItemOrderController {
     public ResponseEntity<List<ItemDetailedInfoDTO>> allBrands(){
         HttpHeaders header = httpHeader("all package brands","list of all packages available for brands");
         List<ItemDetailedInfoDTO> packages = new ArrayList<>();
-        itemDTOCache.forEach(entry->packages.add(entry.getValue()));
         ResponseEntity<List<ItemDetailedInfoDTO>> brands = ResponseEntity.status(HttpStatus.OK).headers(header).body(packages);
         if (brands.getStatusCode().is2xxSuccessful()){
             pageStatisticService.countOpenMainPages();

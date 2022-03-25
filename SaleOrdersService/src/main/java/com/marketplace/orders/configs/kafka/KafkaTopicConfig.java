@@ -1,4 +1,4 @@
-package com.marketplace.itemstorageservice.configs;
+package com.marketplace.orders.configs.kafka;
 
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,10 +17,9 @@ public class KafkaTopicConfig {
     private String TOPIC_UPDATE_ITEM;
 
     @Value("${itemDTO.topic.name_3}")
-    private String SOLD_ITEM_REQUEST;
+    private String TOPIC_REQUEST_FOR_DELETION;
 
-    @Bean
-    @Qualifier("allPackagesTopic")
+    @Bean(name = "allPackagesTopic")
     public NewTopic updateAllPackagesTopic(){
         return TopicBuilder
                 .name(TOPIC_UPDATE_ALL_PACKAGES)
@@ -29,8 +28,7 @@ public class KafkaTopicConfig {
                 .build();
     }
 
-    @Bean
-    @Qualifier("updateItemRequest")
+    @Bean(name = "updatedItemTopic")
     public NewTopic updateItemTopic(){
         return TopicBuilder
                 .name(TOPIC_UPDATE_ITEM)
@@ -39,16 +37,13 @@ public class KafkaTopicConfig {
                 .build();
     }
 
-    @Bean
-    @Qualifier("soldItemRequest")
-    public NewTopic soldItemTopic(){
+    @Bean(name = "soldItemsRequest")
+    public NewTopic itemSold(){
         return TopicBuilder
-                .name(SOLD_ITEM_REQUEST)
+                .name(TOPIC_REQUEST_FOR_DELETION)
                 .partitions(1)
                 .replicas(1)
                 .build();
     }
 
 }
-
-

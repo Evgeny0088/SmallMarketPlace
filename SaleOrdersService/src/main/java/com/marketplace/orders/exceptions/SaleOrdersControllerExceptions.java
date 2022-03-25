@@ -64,7 +64,6 @@ public class SaleOrdersControllerExceptions extends ResponseEntityExceptionHandl
         return ResponseEntity.status(status).body(errorCollector("Http message not writable", Objects.requireNonNull(ex.getMessage()), status));
     }
 
-
     @ExceptionHandler(CustomItemsException.class)
     @ResponseBody
     public ResponseEntity<Object> createItemException(CustomItemsException ex){

@@ -1,10 +1,9 @@
-package com.marketplace.orders.configs;
+package com.marketplace.orders.configs.kafka;
 
 import com.marketplace.orders.DTOModels.ItemDetailedInfoDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +31,7 @@ public class ItemDetailedDTOKafkaConsumerConfig {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServer);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ItemDetailedDTODeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ItemDetailedDTOKafkaDeserializer.class);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, consumer_group_id);
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
         return props;
@@ -51,8 +50,7 @@ public class ItemDetailedDTOKafkaConsumerConfig {
     /*
     factory for getting any updates of ItemDetailedDTO from itemStorage service database
     */
-    @Bean
-    @Qualifier("ItemDetailedDTOUpdateConsumerFactory")
+    @Bean(name = "ItemDetailedDTOUpdateConsumerFactory")
     public KafkaListenerContainerFactory<?> ItemDetailedDTOUpdateConsumerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, List<ItemDetailedInfoDTO>> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
@@ -62,8 +60,8 @@ public class ItemDetailedDTOKafkaConsumerConfig {
     }
 
     @Bean
-    public ItemDetailedDTODeserializer converter() {
-        return new ItemDetailedDTODeserializer();
+    public ItemDetailedDTOKafkaDeserializer converter() {
+        return new ItemDetailedDTOKafkaDeserializer();
     }
 
 }

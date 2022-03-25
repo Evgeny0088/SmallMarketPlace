@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
@@ -60,7 +61,7 @@ import java.util.Set;
 @Table(name = "items")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @NoArgsConstructor
-public class Item {
+public class Item implements Serializable {
     @Id
     @Getter
     @Setter
@@ -82,7 +83,6 @@ public class Item {
     @Setter
     BrandName brandName;
 
-    @JsonIgnore
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "parentItem", cascade = CascadeType.ALL)
     Set<Item> childItems = new HashSet<>();
 

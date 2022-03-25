@@ -2,8 +2,9 @@ package com.marketplace.orders.service;
 
 import com.marketplace.orders.DTOModels.ItemDetailedInfoDTO;
 import lombok.extern.slf4j.Slf4j;
-import org.ehcache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -13,11 +14,13 @@ import java.util.List;
 @Slf4j
 public class ItemConsumerServiceImpl implements ItemConsumerService<ItemDetailedInfoDTO>{
 
-    private final Cache<Long, ItemDetailedInfoDTO> itemDTOCache;
+    private final RedisTemplate<String, ItemDetailedInfoDTO> itemPackagesCache;
+    private static final String REDIS_CACHE_KEY = "itemPackages";
 
     @Autowired
-    public ItemConsumerServiceImpl(Cache<Long, ItemDetailedInfoDTO> itemDTOCache) {
-        this.itemDTOCache = itemDTOCache;
+    public ItemConsumerServiceImpl(@Qualifier("ItemDetailedDTOPackages")
+                                   RedisTemplate<String, ItemDetailedInfoDTO> itemPackagesCache) {
+        this.itemPackagesCache = itemPackagesCache;
     }
 
     @KafkaListener(topics = {"${itemDTO.topic.name_1}"}, groupId = "${spring.kafka.consumer.client-id}",
@@ -27,7 +30,7 @@ public class ItemConsumerServiceImpl implements ItemConsumerService<ItemDetailed
             log.warn("no new packages from ItemStorage service!...");
         }
         else {
-            itemList.forEach(item-> itemDTOCache.put(item.getItemPackageId(),item));
+            itemList.forEach(item-> itemPackagesCache.opsForHash().put(REDIS_CACHE_KEY, String.valueOf(item.getItemPackageId()),item));
             log.info("itemCache is loaded!...{} packages are inserted",itemList.size());
         }
     }
@@ -37,8 +40,8 @@ public class ItemConsumerServiceImpl implements ItemConsumerService<ItemDetailed
                                         containerFactory = "ItemDetailedDTOUpdateConsumerFactory")
     public ItemDetailedInfoDTO updateItemDetailedDTOInCache(List<ItemDetailedInfoDTO> items) {
         if (!items.isEmpty()){
-            items.forEach(item->itemDTOCache.put(item.getItemPackageId(), item));
-            log.info("ItemDetailedDTO is updated on package id:<{}>>>> \n{}", items.get(0).getItemPackageId(), items.get(0));
+            items.forEach(item->itemPackagesCache.opsForHash().put(REDIS_CACHE_KEY, String.valueOf(item.getItemPackageId()), item));
+            log.info("ItemDetailedDTO is updated in cache id:<{}>>>> \n{}", items.get(0).getItemPackageId(), items.get(0));
         }else {
             log.warn("no updates from itemStorage service! ...");
             return null;

@@ -1,4 +1,4 @@
-package com.marketplace.itemstorageservice.configs;
+package com.marketplace.itemstorageservice.configs.kafka;
 
 import com.marketplace.itemstorageservice.DTOmodels.ItemDetailedInfoDTO;
 import com.marketplace.itemstorageservice.DTOmodels.ItemSoldDTO;
@@ -49,14 +49,12 @@ public class ItemKafkaProducerConfig {
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
-    @Bean
-    @Qualifier("ItemDetailedDTOUpdateProducer")
+    @Bean(name = "ItemDetailedDTOUpdateProducer")
     public KafkaTemplate<String, List<ItemDetailedInfoDTO>> ItemDetailedDTOUpdateProducer() {
         return new KafkaTemplate<>(producerListFactory());
     }
 
-    @Bean
-    @Qualifier("itemCountReductionInPackage")
+    @Bean(name = "itemCountReductionInPackage")
     public KafkaTemplate<String, ItemSoldDTO> itemCountReductionInPackage(){
         return new KafkaTemplate<>(itemCountProducerFactory());
     }

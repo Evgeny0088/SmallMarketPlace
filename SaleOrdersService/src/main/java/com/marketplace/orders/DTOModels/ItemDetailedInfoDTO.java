@@ -4,10 +4,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.io.Serializable;
+
 @ToString
 @Setter
 @Getter
-public class ItemDetailedInfoDTO {
+public class ItemDetailedInfoDTO implements Serializable {
     private final long itemPackageId;
     private final long serial;
     private final String brandName;

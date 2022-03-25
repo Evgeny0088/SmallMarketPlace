@@ -1,4 +1,4 @@
-package com.marketplace.orders.configs;
+package com.marketplace.orders.configs.kafka;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,9 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-public class ItemDetailedDTODeserializer implements Deserializer<List<ItemDetailedInfoDTO>> {
-
-    private final ObjectMapper mapper = new ObjectMapper();
+public class ItemDetailedDTOKafkaDeserializer implements Deserializer<List<ItemDetailedInfoDTO>> {
 
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
@@ -23,6 +21,7 @@ public class ItemDetailedDTODeserializer implements Deserializer<List<ItemDetail
 
     @Override
     public List<ItemDetailedInfoDTO> deserialize(String topic, byte[] data){
+        ObjectMapper mapper = new ObjectMapper();
         List<ItemDetailedInfoDTO> items = new ArrayList<>();
         try {
             JsonNode node = mapper.readTree(data);
@@ -30,13 +29,7 @@ public class ItemDetailedDTODeserializer implements Deserializer<List<ItemDetail
                 return items;
             }
             for (int i = 0; i<node.size(); i++){
-                items.add(new ItemDetailedInfoDTO(
-                        node.get(i).get("itemPackageId").asLong(),
-                        node.get(i).get("serial").asLong(),
-                        node.get(i).get("itemsQuantityInPack").asLong(),
-                        node.get(i).get("brandName").asText(),
-                        node.get(i).get("brandVersion").asText())
-                        );
+                items.add(itemMapper(node.get(i)));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -44,4 +37,12 @@ public class ItemDetailedDTODeserializer implements Deserializer<List<ItemDetail
         return items;
     }
 
+    private ItemDetailedInfoDTO itemMapper(JsonNode node){
+        return new ItemDetailedInfoDTO(
+                node.get("itemPackageId").asLong(),
+                node.get("serial").asLong(),
+                node.get("itemsQuantityInPack").asLong(),
+                node.get("brandName").asText(),
+                node.get("brandVersion").asText());
+    }
 }

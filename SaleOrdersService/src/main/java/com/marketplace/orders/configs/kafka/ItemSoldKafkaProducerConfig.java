@@ -1,9 +1,8 @@
-package com.marketplace.orders.configs;
+package com.marketplace.orders.configs.kafka;
 
 import com.marketplace.orders.DTOModels.ItemSoldDTO;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.LongSerializer;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,8 +39,7 @@ public class ItemSoldKafkaProducerConfig {
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
-    @Bean
-    @Qualifier("itemSoldTemplate")
+    @Bean(name = "itemSoldTemplate")
     public KafkaTemplate<Long, ItemSoldDTO> itemSoldTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }

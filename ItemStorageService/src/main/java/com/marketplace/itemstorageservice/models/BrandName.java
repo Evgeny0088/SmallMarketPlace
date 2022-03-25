@@ -7,6 +7,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,7 +17,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Getter
 @Setter
-public class BrandName {
+public class BrandName implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -9,9 +9,10 @@ import com.marketplace.itemstorageservice.repositories.BrandNameRepo;
 import com.marketplace.itemstorageservice.repositories.ItemRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.ehcache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
@@ -28,30 +29,35 @@ import java.util.List;
 @Slf4j
 public class ItemServiceImpl implements ItemService {
 
+    private static final String REDIS_KEY = "itemstorage";
     private final ItemRepo itemRepo;
     private final BrandNameRepo brandRepo;
-    private final Cache<Long, Item> itemCache;
+    private final RedisTemplate<String, Item> itemscacheTemplate;
+    private HashOperations<String, String, Item> itemscache;
     private final KafkaTemplate<String, List<ItemDetailedInfoDTO>> ItemDetailedDTOUpdate;
     private final NewTopic updateItemTopic;
 
     @Autowired
-    public ItemServiceImpl(Cache<Long, Item> itemCache,
-                           ItemRepo itemRepo,
+    public ItemServiceImpl(ItemRepo itemRepo,
                            BrandNameRepo brandRepo,
-                           KafkaTemplate<String, List<ItemDetailedInfoDTO>> ItemDetailedDTOUpdate,
+                           RedisTemplate<String, Item> itemscacheTemplate,
+                           @Qualifier("ItemDetailedDTOUpdateProducer") KafkaTemplate<String, List<ItemDetailedInfoDTO>> ItemDetailedDTOUpdate,
                            @Qualifier("updateItemRequest") NewTopic updateItemTopic) {
-        this.itemCache = itemCache;
         this.itemRepo = itemRepo;
         this.brandRepo = brandRepo;
         this.ItemDetailedDTOUpdate = ItemDetailedDTOUpdate;
         this.updateItemTopic = updateItemTopic;
+        this.itemscacheTemplate = itemscacheTemplate;
+        this.itemscache = itemscacheTemplate.opsForHash();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Item> allItems(){
+        itemscacheTemplate.multi();
         List<Item> items = itemRepo.findAll();
-        items.forEach(item->itemCache.put(item.getId(),item));
+        items.forEach(item->itemscache.put(REDIS_KEY, String.valueOf(item.getId()),item));
+        log.info("items are added in cache>>>>>>>>>>>>>>>>>>.");
         return items;
     }
 
@@ -78,7 +84,8 @@ public class ItemServiceImpl implements ItemService {
                 }
                 parent.getChildItems().add(item);
                 itemRepo.save(parent);
-                itemCache.put(parent.getId(), parent);
+                itemscache.put(REDIS_KEY, String.valueOf(parent.getId()), parent);
+                log.info("item inserted in cache:{}", parent);
                 sendRequestForPackageUpdate(parent);
             }else {
                 if (item.getItem_type() == ItemType.ITEM){
@@ -89,7 +96,8 @@ public class ItemServiceImpl implements ItemService {
                 }
                 item.setParentItem(null);
                 itemRepo.save(item);
-                itemCache.put(item.getId(),item);
+                itemscache.put(REDIS_KEY, String.valueOf(item.getId()),item);
+                log.info("item inserted in cache:{}", item);
             }
         }else {
             errorMessage = "item not possible to create, check inputs!";
@@ -120,7 +128,8 @@ public class ItemServiceImpl implements ItemService {
                 parentDB.getChildItems().remove(itemDB);
                 itemDB.setParentItem(null);
                 itemRepo.save(parentDB);
-                itemCache.put(parentDB.getId(), parentDB);
+                itemscache.put(REDIS_KEY, String.valueOf(parentDB.getId()), parentDB);
+                log.info("item updated in cache:{}", parentDB);
                 sendRequestForPackageUpdate(parentDB);
             }else {
                 if (parent != null){
@@ -137,10 +146,11 @@ public class ItemServiceImpl implements ItemService {
                     itemDB.setParentItem(parent);
                     parent.getChildItems().add(itemDB);
                     itemRepo.save(parent);
-                    itemCache.put(parent.getId(), parent);
+                    itemscache.put(REDIS_KEY, String.valueOf(parent.getId()), parent);
+                    log.info("item updated in cache:{}", parent);
                 }else {
                     itemRepo.save(itemDB);
-                    itemCache.put(itemDB.getId(), itemDB);
+                    itemscache.put(REDIS_KEY, String.valueOf(itemDB.getId()), itemDB);
                 }
                 sendRequestForPackageUpdate(parent);
             }
@@ -172,7 +182,8 @@ public class ItemServiceImpl implements ItemService {
         Item parent = item.getParentItem();
         Long itemToRemoveId = item.getId();
         itemRepo.deleteById(itemToRemoveId);
-        itemCache.remove(itemToRemoveId);
+        itemscache.delete(REDIS_KEY, String.valueOf(itemToRemoveId));
+        log.info("item removed from cache:{}", itemToRemoveId);
         if (parent != null && parent.getChildItems().isEmpty()){
             sendRequestForPackageUpdate(parent);
             return removeSoldItemsFromDB(parent);

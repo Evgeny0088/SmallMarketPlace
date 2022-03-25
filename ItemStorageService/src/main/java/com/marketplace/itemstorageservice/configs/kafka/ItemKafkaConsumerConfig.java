@@ -1,4 +1,4 @@
-package com.marketplace.itemstorageservice.configs;
+package com.marketplace.itemstorageservice.configs.kafka;
 
 import com.marketplace.itemstorageservice.DTOmodels.ItemSoldDTO;
 import lombok.extern.slf4j.Slf4j;
