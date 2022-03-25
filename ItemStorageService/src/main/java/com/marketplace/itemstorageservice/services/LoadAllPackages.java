@@ -23,7 +23,8 @@ public class LoadAllPackages {
 
     @Autowired
     public LoadAllPackages(KafkaTemplate<String, List<ItemDetailedInfoDTO>> allItemsListProducer,
-                           ItemDetailedDTOServiceImpl itemDTOservice, @Qualifier("allPackagesTopic") NewTopic allPackagesTopic) {
+                           ItemDetailedDTOServiceImpl itemDTOservice,
+                           @Qualifier("allPackagesTopic") NewTopic allPackagesTopic) {
         this.allItemsListProducer = allItemsListProducer;
         this.itemDTOservice = itemDTOservice;
         this.allPackagesTopic = allPackagesTopic;

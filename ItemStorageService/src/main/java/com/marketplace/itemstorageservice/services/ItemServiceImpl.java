@@ -29,9 +29,9 @@ import java.util.List;
 @Slf4j
 public class ItemServiceImpl implements ItemService {
 
-    private static final String REDIS_KEY = "itemstorage";
     private final ItemRepo itemRepo;
     private final BrandNameRepo brandRepo;
+    private static final String REDIS_KEY = "itemstorage";
     private final RedisTemplate<String, Item> itemscacheTemplate;
     private HashOperations<String, String, Item> itemscache;
     private final KafkaTemplate<String, List<ItemDetailedInfoDTO>> ItemDetailedDTOUpdate;
@@ -40,7 +40,7 @@ public class ItemServiceImpl implements ItemService {
     @Autowired
     public ItemServiceImpl(ItemRepo itemRepo,
                            BrandNameRepo brandRepo,
-                           RedisTemplate<String, Item> itemscacheTemplate,
+                           @Qualifier("ItemCacheTemplate") RedisTemplate<String, Item> itemscacheTemplate,
                            @Qualifier("ItemDetailedDTOUpdateProducer") KafkaTemplate<String, List<ItemDetailedInfoDTO>> ItemDetailedDTOUpdate,
                            @Qualifier("updateItemRequest") NewTopic updateItemTopic) {
         this.itemRepo = itemRepo;
@@ -54,7 +54,6 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional(readOnly = true)
     public List<Item> allItems(){
-        itemscacheTemplate.multi();
         List<Item> items = itemRepo.findAll();
         items.forEach(item->itemscache.put(REDIS_KEY, String.valueOf(item.getId()),item));
         log.info("items are added in cache>>>>>>>>>>>>>>>>>>.");

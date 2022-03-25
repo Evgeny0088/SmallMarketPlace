@@ -12,10 +12,10 @@ import java.util.List;
 @Slf4j
 public class ReceiveAllPackages {
 
-    private final ItemConsumerService<ItemDetailedInfoDTO> itemConsumerService;
+    private final ItemConsumerService<String, ItemDetailedInfoDTO> itemConsumerService;
 
     @Autowired
-    public ReceiveAllPackages(ItemConsumerService<ItemDetailedInfoDTO> itemConsumerService) {
+    public ReceiveAllPackages(ItemConsumerService<String, ItemDetailedInfoDTO> itemConsumerService) {
         this.itemConsumerService = itemConsumerService;
     }
 
