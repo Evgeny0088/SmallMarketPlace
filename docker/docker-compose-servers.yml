@@ -56,6 +56,22 @@ services:
     networks:
       - proxynet
 
+  redis:
+    image: redis
+    container_name: redis_cache
+    hostname: redishost
+    ports:
+      - "6379:6379"
+    expose:
+      - "6379"
+    command: redis-server --requirepass Primera77!
+    restart: always
+    environment:
+      REDIS_PASSWORD: Primera77!
+      REDIS_REPLICATION_MODE: master
+    networks:
+      - proxynet
+
   zipkin:
     image: openzipkin/zipkin
     container_name: zipkin-server

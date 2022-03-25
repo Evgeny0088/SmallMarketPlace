@@ -58,7 +58,9 @@ services:
       spring.kafka.bootstrap-servers: http://kafka:29092
       eureka.client.serviceUrl.defaultZone: http://registry-service:8761/eureka/
       # redis
-      #spring.redis.url: http://redishost:8090
+      spring.redis.host: redishost
+      spring.redis.port: 6379
+      spring.redis.password: Primera77!
       # database
       spring.datasource.url: jdbc:postgresql://itemstorageDB:5432/itemstorage?serverTimezone=UTC&createDatabaseIfNotExist=true&autoReconnect=true&allowPublicKeyRetrieval=true&useSSL=false
     restart: always
@@ -84,7 +86,6 @@ services:
       # redis
       spring.redis.host: redishost
       spring.redis.port: 6379
-      spring.redis.username: evgeny88
       spring.redis.password: Primera77!
       # database
       spring.datasource.url: jdbc:postgresql://saleordersDB:5432/saleorders?serverTimezone=UTC&createDatabaseIfNotExist=true&autoReconnect=true&allowPublicKeyRetrieval=true&useSSL=false
