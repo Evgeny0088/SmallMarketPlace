@@ -99,5 +99,5 @@ services:
 networks:
   proxynet:
     external:
-      name: docker_proxynet
+      name: smallmarketplace_proxynet
 
