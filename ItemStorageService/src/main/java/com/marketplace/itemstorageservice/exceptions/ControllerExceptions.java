@@ -66,7 +66,7 @@ public class ControllerExceptions extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(CustomItemsException.class)
     public ResponseEntity<Object> createItemException(CustomItemsException ex){
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorCollector("Item creation error", Objects.requireNonNull(ex.getMessage()),HttpStatus.BAD_REQUEST));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorCollector("Item creation error", Objects.requireNonNull(ex.getMessage()),HttpStatus.INTERNAL_SERVER_ERROR));
     }
 
     private <T> ErrorDescription errorCollector(String description, T ex, HttpStatus status){

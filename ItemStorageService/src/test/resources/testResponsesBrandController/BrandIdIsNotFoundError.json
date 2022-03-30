@@ -1,0 +1,8 @@
+{
+  "message": "object: 100, Not possible to delete <100> , brand with this id not found...",
+  "description": [
+    "Item creation error"
+  ],
+  "status": "BAD_REQUEST",
+  "errorTime": "2022-03-28 Local Time: 03:25"
+}

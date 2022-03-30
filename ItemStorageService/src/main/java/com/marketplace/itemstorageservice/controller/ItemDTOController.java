@@ -2,7 +2,9 @@ package com.marketplace.itemstorageservice.controller;
 
 import com.marketplace.itemstorageservice.DTOmodels.ItemDetailedInfoDTO;
 import com.marketplace.itemstorageservice.DTOmodels.ItemSoldDTO;
+import com.marketplace.itemstorageservice.services.ItemDetailedDTOService;
 import com.marketplace.itemstorageservice.services.ItemDetailedDTOServiceImpl;
+import com.marketplace.itemstorageservice.services.ItemService;
 import com.marketplace.itemstorageservice.services.ItemServiceImpl;
 import com.marketplace.itemstorageservice.utils.Utils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,8 +28,8 @@ import java.util.List;
 @Validated
 public class ItemDTOController {
 
-    ItemServiceImpl itemService;
-    ItemDetailedDTOServiceImpl itemDetailedService;
+    ItemService itemService;
+    ItemDetailedDTOService<ItemDetailedInfoDTO,ItemSoldDTO> itemDetailedService;
 
     @Autowired
     public ItemDTOController(ItemServiceImpl itemService, ItemDetailedDTOServiceImpl itemDetailedService) {

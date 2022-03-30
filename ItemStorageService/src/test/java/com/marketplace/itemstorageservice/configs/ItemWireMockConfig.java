@@ -1,6 +1,7 @@
-package com.marketplace.itemstorageservice.controller;
+package com.marketplace.itemstorageservice.configs;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.util.TestPropertyValues;
@@ -12,29 +13,33 @@ import org.springframework.context.event.ContextClosedEvent;
 import java.util.Map;
 
 @TestConfiguration
-public class WireMockConfig implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+public class ItemWireMockConfig implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    @Value("${brandWireMockServer}")
+    @Value("${itemWireMockServer}")
     private int PORT;
 
-    private WireMockServer brandWireMockServer;
-
-    @Bean
-    public WireMockServer brandWireMockServer(){
+    @Bean("itemWireMock")
+    public WireMockServer itemWireMockServer(){
         return new WireMockServer(PORT);
+    }
+
+    @BeforeEach
+    void clearWireMock() {
+        itemWireMockServer().resetAll();
     }
 
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {
-        brandWireMockServer.start();
+        itemWireMockServer().start();
         applicationContext.addApplicationListener(event -> {
             if (event instanceof ContextClosedEvent){
-                brandWireMockServer.stop();
+                itemWireMockServer().stop();
             }
         });
         applicationContext.getBeanFactory()
-                .registerSingleton("brandWireMockServer", brandWireMockServer);
-        TestPropertyValues.of(Map.of("brand_base_url", brandWireMockServer.baseUrl()))
+                .registerSingleton("itemWireMock", itemWireMockServer());
+        TestPropertyValues.of(Map.of(
+                "item_base_url", itemWireMockServer().baseUrl()))
                 .applyTo(applicationContext);
     }
 }

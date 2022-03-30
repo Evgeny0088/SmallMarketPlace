@@ -1,0 +1,8 @@
+{
+  "message": "Validation failed for argument [0] in public org.springframework.http.ResponseEntity<java.lang.String> com.marketplace.itemstorageservice.controller.ItemController.newItem(com.marketplace.itemstorageservice.models.Item): [Field error in object 'item' on field 'brandName': rejected value [null]; codes [NotNull.item.brandName,NotNull.brandName,NotNull.com.marketplace.itemstorageservice.models.BrandName,NotNull]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [item.brandName,brandName]; arguments []; default message [brandName]]; default message [must not be null]] ",
+  "description": [
+    "any error message place holder"
+  ],
+  "status": "BAD_REQUEST",
+  "errorTime": "2022-03-28 Local Time: 06:00"
+}

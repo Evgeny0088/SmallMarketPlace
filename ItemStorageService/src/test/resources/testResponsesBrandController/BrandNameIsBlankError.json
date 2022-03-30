@@ -1,0 +1,8 @@
+{
+  "message": "Validation failed for argument [0] in public org.springframework.http.ResponseEntity<java.lang.String> com.marketplace.itemstorageservice.controller.BrandController.newBrand(com.marketplace.itemstorageservice.models.BrandName): [Field error in object 'brandName' on field 'name': rejected value []; codes [NotBlank.brandName.name,NotBlank.name,NotBlank.java.lang.String,NotBlank]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [brandName.name,name]; arguments []; default message [name]]; default message [must not be blank]] ",
+  "description": [
+    "request body is wrong"
+  ],
+  "status": "BAD_REQUEST",
+  "errorTime": "2022-03-28 Local Time: 11:22"
+}
