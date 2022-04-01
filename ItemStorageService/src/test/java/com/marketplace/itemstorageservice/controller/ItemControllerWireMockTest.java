@@ -3,7 +3,7 @@ package com.marketplace.itemstorageservice.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.marketplace.itemstorageservice.configs.ItemWireMockConfig;
+import com.marketplace.itemstorageservice.configs.WireMockConfig;
 import com.marketplace.itemstorageservice.models.Item;
 import com.marketplace.itemstorageservice.services.ItemServiceImpl;
 import org.junit.jupiter.api.Assertions;
@@ -15,10 +15,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -34,13 +31,10 @@ import static org.mockito.Mockito.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 @ActiveProfiles("wiremock-test")
-@ContextConfiguration(classes = {ItemWireMockConfig.class})
-class WireMockItemControllerTest {
-
-    private static final Logger logger = LoggerFactory.getLogger(WireMockItemControllerTest.class);
+@ContextConfiguration(classes = {WireMockConfig.class})
+class ItemControllerWireMockTest {
 
     @Autowired
-    @Qualifier("itemWireMock")
     WireMockServer itemWireMockServer;
     @Autowired
     ObjectMapper objectMapper;
@@ -146,11 +140,11 @@ class WireMockItemControllerTest {
     @DisplayName("delete item from DB")
     @ParameterizedTest(name = "test case: => itemId={0}")
     @ValueSource(strings = {"1", "NOT_DIGIT"})
-    void brandIsDeletedTest(String itemId){
+    void itemIsDeletedTest(String itemId){
         String uri = String.format("/items/delete/%s", itemId);
         int times = 0;
         if (itemId.matches("\\d")){
-            String returnMessage = String.format("brand with <%s> is deleted!", itemId);
+            String returnMessage = String.format("item with <%s> is deleted!", itemId);
             when(itemService.itemDeleted(Long.parseLong(itemId))).thenReturn(returnMessage);
             wireMockServer_GET_With_OK_ReturnMessage(itemWireMockServer, returnMessage, uri);
             webTestClient_GET_With_OK_ResponseBody(webTestClient, uri);

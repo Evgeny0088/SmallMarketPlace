@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
@@ -74,12 +75,12 @@ public class ItemServiceImpl implements ItemService {
                 if (item.getParentItem().getItem_type() == ItemType.ITEM){
                     errorMessage = String.format("parent <%s> should have PACK item type, check inputs!",item);
                     log.error(errorMessage);
-                    throw new CustomItemsException(item.getItem_type().name(), "should have PACK item type, check inputs!");
+                    throw new CustomItemsException(item.getItem_type().name(), "should have PACK item type, check inputs!", HttpStatus.BAD_REQUEST);
                 }
                 if (item.getParentItem().getBrandName() != item.getBrandName()){
                     errorMessage = "item and parent should have same brand, check inputs!";
                     log.error(errorMessage);
-                    throw new CustomItemsException(item.getItem_type().name(), errorMessage);
+                    throw new CustomItemsException(item.getItem_type().name(), errorMessage, HttpStatus.BAD_REQUEST);
                 }
                 parent.getChildItems().add(item);
                 itemRepo.save(parent);
@@ -91,7 +92,7 @@ public class ItemServiceImpl implements ItemService {
                     errorMessage = "item must have PACK type if parent is null, check inputs!";
                     log.error(errorMessage);
                     throw new CustomItemsException(item.getItem_type().name(),
-                            "item must have PACK type if parent is null, check inputs!");
+                            "item must have PACK type if parent is null, check inputs!", HttpStatus.BAD_REQUEST);
                 }
                 item.setParentItem(null);
                 itemRepo.save(item);
@@ -101,7 +102,7 @@ public class ItemServiceImpl implements ItemService {
         }else {
             errorMessage = "item not possible to create, check inputs!";
             log.error(errorMessage);
-            throw new CustomItemsException(item.getItem_type().name(), errorMessage);
+            throw new CustomItemsException(item.getItem_type().name(), errorMessage, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -122,7 +123,7 @@ public class ItemServiceImpl implements ItemService {
                 if (itemDB.getItem_type() == ItemType.ITEM){
                     errorMessage = String.format("item <%s> should have PACK item type if do not have parent, check inputs!",itemDB.getId());
                     log.error(errorMessage);
-                    throw new CustomItemsException(itemDB.getId(), "should have PACK item type if do not have parent, check inputs!");
+                    throw new CustomItemsException(itemDB.getId(), "should have PACK item type if do not have parent, check inputs!", HttpStatus.BAD_REQUEST);
                 }
                 parentDB.getChildItems().remove(itemDB);
                 itemDB.setParentItem(null);
@@ -135,12 +136,12 @@ public class ItemServiceImpl implements ItemService {
                     if (parent.getItem_type() == ItemType.ITEM){
                         errorMessage = String.format("%s should have PACK item type if do not have parent, check inputs!",parent.getBrandName());
                         log.error(errorMessage);
-                        throw new CustomItemsException(parent.getBrandName(), "should have PACK item type, check inputs!");
+                        throw new CustomItemsException(parent.getBrandName(), "should have PACK item type, check inputs!", HttpStatus.BAD_REQUEST);
                     }
                     if (!parent.getBrandName().getName().equals(itemDB.getBrandName().getName())){
                         errorMessage = "brand in parent item should be the same as child item, check inputs!";
                         log.error(errorMessage);
-                        throw new CustomItemsException(parent.getBrandName(), errorMessage);
+                        throw new CustomItemsException(parent.getBrandName(), errorMessage, HttpStatus.BAD_REQUEST);
                     }
                     itemDB.setParentItem(parent);
                     parent.getChildItems().add(itemDB);
@@ -156,7 +157,7 @@ public class ItemServiceImpl implements ItemService {
         }else {
             errorMessage = "item not possible to update, check inputs!!";
             log.error(errorMessage);
-            throw new CustomItemsException(id,errorMessage);
+            throw new CustomItemsException(id,errorMessage, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -170,7 +171,7 @@ public class ItemServiceImpl implements ItemService {
         }else {
             String errorMessage = "item with id <%d> is not found...";
             log.error(errorMessage);
-            throw new CustomItemsException(id, "is not found");
+            throw new CustomItemsException(id, "is not found", HttpStatus.NOT_FOUND);
         }
     }
 

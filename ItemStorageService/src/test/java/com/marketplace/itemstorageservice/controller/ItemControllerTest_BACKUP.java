@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Disabled
 @WebMvcTest(ItemController.class)
-class ItemControllerTest {
+class ItemControllerTest_BACKUP {
 
     @Autowired
     MockMvc mockMvc;

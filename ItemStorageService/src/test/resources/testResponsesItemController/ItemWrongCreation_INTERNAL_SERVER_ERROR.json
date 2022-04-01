@@ -1,8 +1,0 @@
-{
-  "message": "object: ITEM, item must have PACK type if parent is null, check inputs!",
-  "description": [
-    "Item creation error"
-  ],
-  "status": "INTERNAL_SERVER_ERROR",
-  "errorTime": "2022-03-31 Local Time: 09:55"
-}

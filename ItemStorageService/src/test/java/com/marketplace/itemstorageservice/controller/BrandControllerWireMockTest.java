@@ -3,19 +3,20 @@ package com.marketplace.itemstorageservice.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.marketplace.itemstorageservice.configs.BrandWireMockConfig;
+import com.marketplace.itemstorageservice.configs.WireMockConfig;
+import com.marketplace.itemstorageservice.exceptions.CustomItemsException;
 import com.marketplace.itemstorageservice.models.BrandName;
 import com.marketplace.itemstorageservice.services.BrandService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -32,13 +33,12 @@ import static org.mockito.Mockito.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 @ActiveProfiles("wiremock-test")
-@ContextConfiguration(classes = {BrandWireMockConfig.class})
+@ContextConfiguration(classes = {WireMockConfig.class})
 class BrandControllerWireMockTest {
 
     private static final Logger logger = LoggerFactory.getLogger(BrandControllerWireMockTest.class);
 
     @Autowired
-    @Qualifier("brandWireMock")
     WireMockServer brandWireMockServer;
     @Autowired
     ObjectMapper objectMapper;
@@ -103,7 +103,7 @@ class BrandControllerWireMockTest {
     void updateBrandNameTest() throws JsonProcessingException {
         BrandName updatedBrand = new BrandName("gucci", "0.1");
         updatedBrand.setId(1L);
-        String brandNameFromDB = "<updatable brand>";
+        String brandNameFromDB = "updatable brand";
         String requestBody = objectMapper.writeValueAsString(updatedBrand);
         String uri = String.format("/brands/update?brand_name=%s", brandNameFromDB);
         String returnMessage = String.format("brand with name %s successfully updated",brandNameFromDB);

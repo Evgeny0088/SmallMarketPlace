@@ -1,119 +1,79 @@
 package com.marketplace.itemstorageservice.services;
 
+import com.marketplace.itemstorageservice.configs.BrandServiceTestConfig;
+import com.marketplace.itemstorageservice.exceptions.CustomItemsException;
 import com.marketplace.itemstorageservice.models.BrandName;
 import com.marketplace.itemstorageservice.repositories.BrandNameRepo;
-
-import com.marketplace.itemstorageservice.exceptions.CustomItemsException;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-@Disabled
-@ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ContextConfiguration(initializers = BrandServiceTestConfig.Initializer.class, classes = {BrandServiceTestConfig.class})
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class BrandServiceTest {
 
-    @Mock
-    private BrandNameRepo brandNameRepo;
+    @Autowired
+    BrandNameRepo brandNameRepo;
 
-    @InjectMocks
-    BrandServiceImpl brandService;
+    @Autowired
+    BrandService brandService;
 
     @Test
-    @DisplayName("find all brands")
-    void allBrandsTest(){
-        List<BrandName> brands = List.of(new BrandName("b1","0.1"),
-                new BrandName("b2","0.1"),
-                new BrandName("b3","0.1")
-                );
-        given(brandNameRepo.findAll()).willReturn(brands);
-        List<BrandName> excepted = brandService.allBrands();
-        assertEquals(brands,excepted);
+    @DisplayName("post brands and get all brands from database")
+    void getAllItems(){
+        //given
+        IntStream.of(3).forEach(i->brandService.postNewBrandName(new BrandName(String.format("brand%s",i),"100")));
+        //when
+        List<BrandName> allBrands = brandService.allBrands();
+        //then
+        assertEquals(3, allBrands.size());
     }
 
     @Test
-    @DisplayName("create new Brand name with valid inputs")
-    void postNewBrandName() {
-        String brandName = "new";
-        final BrandName newBrand = new BrandName();
-        newBrand.setId(1L);
-        newBrand.setName(brandName);
-        newBrand.setVersion("0.1");
-        given(brandNameRepo.findByName(brandName)).willReturn(null);
-        given(brandNameRepo.save(newBrand)).willAnswer(invocation -> invocation.getArgument(0));
+    @DisplayName("post brand and verify that existed brand will not be persisted again")
+    void postNewBrand(){
+        String brandName = "brand";
+        //given
+        BrandName brand = new BrandName(brandName, "100");
+        //when
+        brandService.postNewBrandName(brand);
+        BrandName brandFromDB = brandNameRepo.findByName(brand.getName());
+        //then
+        assertNotNull(brandFromDB);
+        assertEquals(brandFromDB.getName(), brand.getName());
 
-        brandService.postNewBrandName(newBrand);
+        //and then
 
-        verify(brandNameRepo, times(1)).save(Mockito.any(BrandName.class));
-    }
-
-    @Test
-    @DisplayName("failed to save if Brand from DB with the same name found")
-    void postBrandNameFailedTest(){
-        String brandName = "brandFromDB";
-        BrandName brand = new BrandName(brandName, "0.1");
+//        given(otherServiceMock.bar()).willThrow(new MyException());
+//
+//        when(() -> myService.foo());
+//
+//        then(caughtException()).isInstanceOf(MyException.class);
 
         given(brandNameRepo.findByName(brandName)).willReturn(brand);
 
-        assertThrows(CustomItemsException.class,()->brandService.postNewBrandName(brand));
-        verify(brandNameRepo, never()).save(Mockito.any(BrandName.class));
+        if (brandFromDB.getName().equals(brand.getName())){
+            assertThrows(CustomItemsException.class,()-> mock(BrandService.class).postNewBrandName(brand));
+        }
+//        verify(brandNameRepo, never()).save(Mockito.any(BrandName.class));
     }
 
-    @Test
-    @DisplayName("update existing Brand in DB")
-    void updateBrandTest(){
-        String brandName = "brandFromDB";
-        BrandName brand = new BrandName(brandName, "0.1");
-        given(brandNameRepo.findByName(brandName)).willReturn(brand);
-        given(brandNameRepo.save(brand)).willAnswer(invocation -> invocation.getArgument(0));
-        brandService.updateBrand(brandName, brand);
-
-        assertNotNull(brand);
-        verify(brandNameRepo, times(1)).save(Mockito.any(BrandName.class));
-    }
-
-    @Test
-    @DisplayName("failed to update if Brand from DB not found")
-    void updateBrandFailedTest(){
-        String brandName = "brandFromDB";
-        BrandName brand = new BrandName(brandName, "0.1");
-
-        given(brandNameRepo.findByName(brandName)).willReturn(null);
-
-        assertThrows(CustomItemsException.class,()->brandService.updateBrand(brandName,brand));
-        verify(brandNameRepo, never()).save(Mockito.any(BrandName.class));
-    }
-
-    @Test
-    @DisplayName("delete Brand")
-    void brandDeletedTest(){
-        Long id = 1L;
-        BrandName deletedBrand = new BrandName("brand", "0.1");
-        deletedBrand.setId(id);
-        given(brandNameRepo.findById(id)).willReturn(Optional.of(deletedBrand));
-        brandService.brandDeleted(id);
-        verify(brandNameRepo,times(1)).deleteById(id);
-    }
-
-    @Test
-    @DisplayName("failed to delete Brand")
-    void brandDeletedFailedTest(){
-        Long id = 1L;
-        given(brandNameRepo.findById(anyLong())).willReturn(Optional.empty());
-        assertThrows(CustomItemsException.class,()->brandService.brandDeleted(anyLong()));
-        verify(brandNameRepo, never()).deleteById(id);
-    }
 
 }
 

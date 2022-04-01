@@ -2,7 +2,6 @@ package com.marketplace.itemstorageservice.configs;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
@@ -13,33 +12,30 @@ import org.springframework.context.event.ContextClosedEvent;
 import java.util.Map;
 
 @TestConfiguration
-public class ItemWireMockConfig implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+public class WireMockConfig implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    @Value("${itemWireMockServer}")
-    private int PORT;
-
-    @Bean("itemWireMock")
-    public WireMockServer itemWireMockServer(){
-        return new WireMockServer(PORT);
+    @Bean
+    public WireMockServer wireMockServer(){
+        return new WireMockServer();
     }
 
     @BeforeEach
     void clearWireMock() {
-        itemWireMockServer().resetAll();
+        wireMockServer().resetAll();
     }
 
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {
-        itemWireMockServer().start();
+        wireMockServer().start();
         applicationContext.addApplicationListener(event -> {
             if (event instanceof ContextClosedEvent){
-                itemWireMockServer().stop();
+                wireMockServer().stop();
             }
         });
         applicationContext.getBeanFactory()
-                .registerSingleton("itemWireMock", itemWireMockServer());
+                .registerSingleton("brandWireMock", wireMockServer());
         TestPropertyValues.of(Map.of(
-                "item_base_url", itemWireMockServer().baseUrl()))
+                "base_url", wireMockServer().baseUrl()))
                 .applyTo(applicationContext);
     }
 }

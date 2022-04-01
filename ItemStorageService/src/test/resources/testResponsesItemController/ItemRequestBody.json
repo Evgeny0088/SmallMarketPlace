@@ -1,0 +1,10 @@
+{
+  "serial": 100,
+  "brandName": {
+    "id":4
+  },
+  "parentItem":{
+    "id": 72
+  },
+  "item_type": "ITEM"
+}

@@ -2,6 +2,7 @@ package com.marketplace.itemstorageservice.configs;
 
 import org.apache.kafka.clients.admin.NewTopic;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.util.TestPropertyValues;
@@ -29,7 +30,7 @@ public class BrandServiceTestConfig{
     public static PostgreSQLContainer<?> postgreSQLContainer = CustomPostgresSQLContainer.getInstance();
 
     @Container
-    public static KafkaContainerConfig kafkaContainer;
+    public static KafkaContainerConfig kafkaContainer = KafkaContainerConfig.getContainer(DockerImageName.parse(IMAGE_VERSION));
 
     @BeforeAll
     public static void init(){
@@ -37,10 +38,15 @@ public class BrandServiceTestConfig{
         kafkaContainer = KafkaContainerConfig.getContainer(DockerImageName.parse(IMAGE_VERSION));
     }
 
+    @AfterAll
+    public static void destroy(){
+        postgreSQLContainer.stop();
+        kafkaContainer.stop();
+    }
+
     public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(@NotNull ConfigurableApplicationContext applicationContext) {
-            postgreSQLContainer.start();
             applicationContext.addApplicationListener(event -> {
                 if (event instanceof ContextClosedEvent) {
                     postgreSQLContainer.stop();
