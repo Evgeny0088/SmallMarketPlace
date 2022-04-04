@@ -9,4 +9,5 @@ public interface ItemService {
     void createNewItem(Item item);
     void updateItem(Long id,Item item);
     String itemDeleted(Long id);
+    void sendRequestForPackageUpdate(Item item);
 }

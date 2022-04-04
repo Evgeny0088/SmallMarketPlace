@@ -19,7 +19,7 @@ create table items(
     brand_id bigint not null,
     parent_id bigint,
     creationdate TimeStamp,
-    constraint brandId_id_fk foreign key (brand_id) references brands (id),
+    constraint brand_id_fk foreign key (brand_id) references brands (id),
     constraint parent_id_fk foreign key (parent_id) references items (id)
 );
 

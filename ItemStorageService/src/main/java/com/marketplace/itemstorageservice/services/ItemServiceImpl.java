@@ -173,6 +173,27 @@ public class ItemServiceImpl implements ItemService {
         }
     }
 
+    @Override
+    public void sendRequestForPackageUpdate(Item parent) {
+        long parent_id = parent != null ? parent.getId() : -1L;
+        if (parent_id != -1L){
+            List<ItemDetailedInfoDTO> updatedPackage = Collections.singletonList(itemRepo.getItemDTOByParentId(parent.getId()));
+            ListenableFuture<SendResult<String, List<ItemDetailedInfoDTO>>> future = ItemDetailedDTOUpdate.send(updateItemTopic.name(),updatedPackage);
+            future.addCallback(new ListenableFutureCallback<>(){
+                @Override
+                public void onSuccess(SendResult<String, List<ItemDetailedInfoDTO>> result) {
+                    log.info("package with id <{}> sent to SaleOrders service!",parent.getId());
+                }
+                @Override
+                public void onFailure(Throwable ex) {
+                    log.error(String.format("message failed to send, see stack trace below:\n%s", ex.getMessage()));
+                }
+            });
+        }else {
+            log.info("there is no updates on packages, nothing to send!...");
+        }
+    }
+
     private String removeSoldItemsFromDB(Item item){
         if (item==null){
             return "item with %d is deleted!";
@@ -191,26 +212,6 @@ public class ItemServiceImpl implements ItemService {
             }
             sendRequestForPackageUpdate(parent);
             return removeSoldItemsFromDB(null);
-        }
-    }
-
-    private void sendRequestForPackageUpdate(Item parent) {
-        long parent_id = parent != null ? parent.getId() : -1L;
-        if (parent_id != -1L){
-            List<ItemDetailedInfoDTO> updatedPackage = Collections.singletonList(itemRepo.getItemDTOByParentId(parent.getId()));
-            ListenableFuture<SendResult<String, List<ItemDetailedInfoDTO>>> future = ItemDetailedDTOUpdate.send(updateItemTopic.name(),updatedPackage);
-            future.addCallback(new ListenableFutureCallback<>(){
-                @Override
-                public void onSuccess(SendResult<String, List<ItemDetailedInfoDTO>> result) {
-                    log.info("package with id <{}> sent to SaleOrders service!",parent.getId());
-                }
-                @Override
-                public void onFailure(Throwable ex) {
-                    log.error(String.format("message failed to send, see stack trace below:\n%s", ex.getMessage()));
-                }
-            });
-        }else {
-            log.info("there is no updates on packages, nothing to send!...");
         }
     }
 
