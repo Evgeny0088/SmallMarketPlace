@@ -1,4 +1,4 @@
-package com.marketplace.itemstorageservice.utilFunctions;
+package com.smallmarketplace;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +15,7 @@ public class ItemRequestBodyJsonTest {
     @ParameterizedTest(name = "test case: => serial={0}, brandId={1}, parentId={2}, item_type={3}, expectedBody={4}")
     @ArgumentsSource(ItemRequestBodyJsonData.class)
     void itemRequestBodyJsonTest(String serial, String brandId, String parentId, String item_type, String expectedBody){
-        String actual = HelperFunctions.requestBody(serial, brandId, parentId, item_type);
+        String actual = RequestBodyParser.requestBody(serial, brandId, parentId, item_type);
         logger.info("request body results:");
         Assertions.assertEquals(expectedBody, actual);
     }

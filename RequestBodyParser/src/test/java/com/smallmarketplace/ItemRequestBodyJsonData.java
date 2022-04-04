@@ -1,4 +1,4 @@
-package com.marketplace.itemstorageservice.utilFunctions;
+package com.smallmarketplace;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;

@@ -1,8 +1,8 @@
-package com.marketplace.itemstorageservice.utilFunctions;
+package com.smallmarketplace;
 
 import org.jetbrains.annotations.NotNull;
 
-public class HelperFunctions {
+public class RequestBodyParser {
 
     public static String requestBody(String serial, String brandId, String parentId, String itemType){
         String initString = String.format("""

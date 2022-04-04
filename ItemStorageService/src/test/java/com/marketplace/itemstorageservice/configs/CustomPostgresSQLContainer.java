@@ -15,7 +15,7 @@ public class CustomPostgresSQLContainer extends PostgreSQLContainer<CustomPostgr
 
     private static final String IMAGE_VERSION = "postgres:13";
 
-    public CustomPostgresSQLContainer() {
+    private CustomPostgresSQLContainer() {
         super(IMAGE_VERSION);
     }
 

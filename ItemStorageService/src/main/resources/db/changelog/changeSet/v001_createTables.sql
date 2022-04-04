@@ -1,6 +1,8 @@
 --liquibase formatted sql
 --changeset ek:v001 splitStatements=true endDelimiter:;
 
+create sequence hibernate_sequence start with 1 increment by 1;
+
 create table brands (
     id bigserial not null primary key,
     brandname varchar(255) not null,

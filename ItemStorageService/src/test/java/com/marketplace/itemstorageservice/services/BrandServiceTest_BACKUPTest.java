@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 
 @Disabled
 @ExtendWith(MockitoExtension.class)
-public class BrandServiceTest_BACKUP {
+public class BrandServiceTest_BACKUPTest {
 
     @Mock
     private BrandNameRepo brandNameRepo;

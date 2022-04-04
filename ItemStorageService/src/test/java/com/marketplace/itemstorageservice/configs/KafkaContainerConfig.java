@@ -8,15 +8,16 @@ import org.testcontainers.utility.DockerImageName;
 public class KafkaContainerConfig extends KafkaContainer{
 
     private static final Logger log = LoggerFactory.getLogger(KafkaContainerConfig.class);
+    private static final String IMAGE_VERSION = "confluentinc/cp-kafka:7.0.0";
     private static KafkaContainerConfig kafkaContainer;
 
-    private KafkaContainerConfig(DockerImageName dockerImageName) {
-        super(dockerImageName);
+    private KafkaContainerConfig() {
+        super(DockerImageName.parse(IMAGE_VERSION));
     }
 
-    public static KafkaContainerConfig getContainer(DockerImageName dockerImageName) {
+    public static KafkaContainerConfig getContainer() {
         if (kafkaContainer == null) {
-            kafkaContainer = new KafkaContainerConfig(dockerImageName);
+            kafkaContainer = new KafkaContainerConfig();
             kafkaContainer.start();
             kafkaContainer.setupSpringProperties();
             log.info("kafka container is started!>>>>");

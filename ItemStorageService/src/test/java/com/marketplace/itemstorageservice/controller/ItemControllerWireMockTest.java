@@ -6,6 +6,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.marketplace.itemstorageservice.configs.WireMockConfig;
 import com.marketplace.itemstorageservice.models.Item;
 import com.marketplace.itemstorageservice.services.ItemServiceImpl;
+import com.smallmarketplace.RequestBodyParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,8 +23,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
-
-import static com.marketplace.itemstorageservice.utilFunctions.HelperFunctions.requestBody;
 import static com.marketplace.itemstorageservice.utilFunctions.WireMocks.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -66,8 +65,7 @@ class ItemControllerWireMockTest {
     void newItemTest(String serial, String brandId, String parentId, String itemType){
         String uri = "/items/new";
         String returnMessage = "new Item is created!";
-        String requestBody = requestBody(serial, brandId, parentId, itemType);
-
+        String requestBody = RequestBodyParser.requestBody(serial, brandId, parentId, itemType);
         doAnswer(InvocationOnMock::getArguments).when(itemService).createNewItem(any(Item.class));
 
         wireMockServer_POST_With_OK(itemWireMockServer, returnMessage, uri);
@@ -89,7 +87,7 @@ class ItemControllerWireMockTest {
     void newItemFailedBrandDoesNotExistTest(String serial, String brandId, String parentId, String itemType, String errorStatus){
         String uri = "/items/new";
         String resourceFile = "testResponsesItemController/ItemWrongCreation_BAD_REQUEST.json";
-        String requestBody = requestBody(serial, brandId, parentId, itemType);
+        String requestBody = RequestBodyParser.requestBody(serial, brandId, parentId, itemType);
         wireMockServer_POST_With_BAD_REQUEST(itemWireMockServer, resourceFile, uri);
         webTestClient_POST_With_BAD_REQUEST(webTestClient,requestBody, uri, errorStatus);
         Mockito.verify(itemService,never()).createNewItem(Mockito.any(Item.class));
@@ -104,7 +102,7 @@ class ItemControllerWireMockTest {
     void updateItemTest(String itemId, String serial, String brandId, String parentId, String itemType){
         String uri = String.format("/items/update?itemId=%s", itemId);
         String returnMessage = String.format("item with %s successfully updated", itemId);
-        String requestBody = requestBody(serial, brandId, parentId, itemType);
+        String requestBody = RequestBodyParser.requestBody(serial, brandId, parentId, itemType);
         doAnswer(InvocationOnMock::getArguments).when(itemService).updateItem(anyLong(),any(Item.class));
 
         wireMockServer_POST_With_OK(itemWireMockServer, returnMessage, uri);
@@ -129,7 +127,7 @@ class ItemControllerWireMockTest {
                                                String itemType, String errorStatus){
         String uri = String.format("/items/update?itemId=%s", itemId);
         String resourceFile = "testResponsesItemController/ItemWrongCreation_BAD_REQUEST.json";
-        String requestBody = requestBody(serial, brandId, parentId, itemType);
+        String requestBody = RequestBodyParser.requestBody(serial, brandId, parentId, itemType);
 
         wireMockServer_POST_With_BAD_REQUEST(itemWireMockServer,resourceFile, uri);
         webTestClient_POST_With_BAD_REQUEST(webTestClient,requestBody, uri, errorStatus);

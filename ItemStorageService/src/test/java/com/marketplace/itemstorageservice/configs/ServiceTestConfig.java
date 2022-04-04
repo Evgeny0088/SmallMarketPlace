@@ -3,23 +3,18 @@ package com.marketplace.itemstorageservice.configs;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ContextClosedEvent;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 @TestConfiguration
 @Testcontainers
-public class BrandServiceTestConfig{
-
-    private static final String IMAGE_VERSION = "confluentinc/cp-kafka:7.0.0";
+public class ServiceTestConfig {
 
     @Bean
     NewTopic userData() {
@@ -27,21 +22,19 @@ public class BrandServiceTestConfig{
     }
 
     @Container
-    public static PostgreSQLContainer<?> postgreSQLContainer = CustomPostgresSQLContainer.getInstance();
+    public static CustomPostgresSQLContainer postgreSQLContainer = CustomPostgresSQLContainer.getInstance();
 
     @Container
-    public static KafkaContainerConfig kafkaContainer = KafkaContainerConfig.getContainer(DockerImageName.parse(IMAGE_VERSION));
+    public static KafkaContainerConfig kafkaContainer = KafkaContainerConfig.getContainer();
 
-    @BeforeAll
-    public static void init(){
-        postgreSQLContainer = CustomPostgresSQLContainer.getInstance();
-        kafkaContainer = KafkaContainerConfig.getContainer(DockerImageName.parse(IMAGE_VERSION));
-    }
+    @Container
+    public static RedisCustomContainer redisCustomContainer = RedisCustomContainer.getInstance();
 
     @AfterAll
     public static void destroy(){
         postgreSQLContainer.stop();
         kafkaContainer.stop();
+        redisCustomContainer.stop();
     }
 
     public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
@@ -51,12 +44,15 @@ public class BrandServiceTestConfig{
                 if (event instanceof ContextClosedEvent) {
                     postgreSQLContainer.stop();
                     kafkaContainer.stop();
+                    redisCustomContainer.stop();
                 }
             });
             TestPropertyValues.of(
                     "spring.datasource.url=" + postgreSQLContainer.getJdbcUrl(),
                     "spring.datasource.username=" + postgreSQLContainer.getUsername(),
-                    "spring.datasource.password=" + postgreSQLContainer.getPassword()
+                    "spring.datasource.password=" + postgreSQLContainer.getPassword(),
+                    "spring.redis.host=" + redisCustomContainer.getContainerIpAddress(),
+                    "spring.redis.port=" + redisCustomContainer.getMappedPort(redisCustomContainer.getRedisPort())
             ).applyTo(applicationContext.getEnvironment());
         }
     }

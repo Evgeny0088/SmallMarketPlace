@@ -3,6 +3,7 @@ package com.marketplace.itemstorageservice.services;
 import com.marketplace.itemstorageservice.models.BrandName;
 import com.marketplace.itemstorageservice.repositories.BrandNameRepo;
 import com.marketplace.itemstorageservice.exceptions.CustomItemsException;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,7 +18,9 @@ import java.util.List;
 @Slf4j
 public class BrandServiceImpl implements BrandService {
 
-    private final BrandNameRepo brandNameRepo;
+    private BrandNameRepo brandNameRepo;
+
+    public BrandServiceImpl(){}
 
     @Autowired
     public BrandServiceImpl(BrandNameRepo brandNameRepo) {
