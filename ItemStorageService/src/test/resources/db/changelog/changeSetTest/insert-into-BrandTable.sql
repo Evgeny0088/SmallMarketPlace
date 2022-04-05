@@ -15,3 +15,5 @@ INSERT INTO items (id, serial, item_type, brand_id, parent_id, creationdate) VAL
 INSERT INTO items (id, serial, item_type, brand_id, parent_id, creationdate) VALUES (5, 100, 'ITEM', 2, 2, '2021-12-26 17:58:06');
 INSERT INTO items (id, serial, item_type, brand_id, parent_id, creationdate) VALUES (6, 100, 'ITEM', 2, 2, '2021-12-26 18:00:15');
 INSERT INTO items (id, serial, item_type, brand_id, parent_id, creationdate) VALUES (7, 100, 'ITEM', 2, 2, '2021-12-26 17:58:08');
+INSERT INTO items (id, serial, item_type, brand_id, parent_id, creationdate) VALUES (8, 100, 'PACK', 3, null, '2021-12-26 17:58:08');
+INSERT INTO items (id, serial, item_type, brand_id, parent_id, creationdate) VALUES (9, 100, 'ITEM', 3, 8, '2021-12-26 17:58:08');

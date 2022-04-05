@@ -127,40 +127,47 @@ public class ItemServiceImpl implements ItemService {
                 itemDB.setParentItem(null);
                 itemRepo.save(parentDB);
                 itemsCache.put(REDIS_KEY, String.valueOf(parentDB.getId()), parentDB);
-                log.info("item updated in cache:{}", parentDB);
+                log.info("item updated in cache:{} :: {}",parentDB.getId(), parentDB.getChildItems());
                 sendRequestForPackageUpdate(parentDB);
-            }else {
-                if (parent != null){
-                    if (parent.getItem_type() == ItemType.ITEM){
-                        errorMessage = String.format("%s should have PACK item type if do not have parent, check inputs!",parent.getBrandName());
-                        log.error(errorMessage);
-                        throw new CustomItemsException(parent.getBrandName(), "should have PACK item type, check inputs!", HttpStatus.BAD_REQUEST);
-                    }
-                    if (!parent.getBrandName().getName().equals(itemDB.getBrandName().getName())){
-                        errorMessage = "brand in parent item should be the same as child item, check inputs!";
-                        log.error(errorMessage);
-                        throw new CustomItemsException(parent.getBrandName(), errorMessage, HttpStatus.BAD_REQUEST);
-                    }
-                    itemDB.setParentItem(parent);
-                    parent.getChildItems().add(itemDB);
-                    itemRepo.save(parent);
-                    itemsCache.put(REDIS_KEY, String.valueOf(parent.getId()), parent);
-                    log.info("item updated in cache:{}", parent);
-                }else {
-                    itemRepo.save(itemDB);
-                    itemsCache.put(REDIS_KEY, String.valueOf(itemDB.getId()), itemDB);
+            }
+            else if (parent!=null){
+                if (parent.getItem_type() == ItemType.ITEM){
+                    errorMessage = String.format("%s should have PACK item type if do not have parent, check inputs!",parent.getBrandName());
+                    log.error(errorMessage);
+                    throw new CustomItemsException(parent.getBrandName(), "should have PACK item type, check inputs!", HttpStatus.BAD_REQUEST);
                 }
+                if (!parent.getBrandName().getName().equals(itemDB.getBrandName().getName())){
+                    errorMessage = "brand in parent item should be the same as child item, check inputs!";
+                    log.error(errorMessage);
+                    throw new CustomItemsException(parent.getBrandName(), errorMessage, HttpStatus.BAD_REQUEST);
+                }
+                itemDB.setParentItem(parent);
+                parent.getChildItems().add(itemDB);
+                itemRepo.save(parent);
+                itemsCache.put(REDIS_KEY, String.valueOf(parent.getId()), parent);
                 sendRequestForPackageUpdate(parent);
+                log.info("item updated in cache:{} :: {}", parent.getId(), parent.getChildItems().size());
+                if (parentDB!=null){
+                    parentDB.getChildItems().remove(itemDB);
+                    itemRepo.save(parentDB);
+                    itemsCache.put(REDIS_KEY, String.valueOf(parentDB.getId()), parentDB);
+                    sendRequestForPackageUpdate(parentDB);
+                    log.info("item updated in cache:{} :: {}", parentDB.getId(), parentDB.getChildItems().size());
+                }
+            }
+            else {
+                itemRepo.save(itemDB);
+                itemsCache.put(REDIS_KEY, String.valueOf(itemDB.getId()), itemDB);
             }
         }else {
             errorMessage = "item not possible to update, check inputs!!";
             log.error(errorMessage);
-            throw new CustomItemsException(id,errorMessage, HttpStatus.BAD_REQUEST);
+            throw new CustomItemsException(id,errorMessage, HttpStatus.NOT_FOUND);
         }
     }
 
     @Override
-    @Transactional(rollbackFor = RuntimeException.class)
+    @Transactional(isolation = Isolation.REPEATABLE_READ, rollbackFor = RuntimeException.class)
     public String itemDeleted(Long id) throws CustomItemsException{
         Item itemToRemove = itemRepo.findById(id).orElse(null);
         if (itemToRemove != null){
@@ -198,21 +205,21 @@ public class ItemServiceImpl implements ItemService {
         if (item==null){
             return "item with %d is deleted!";
         }
-        Item parent = item.getParentItem();
         Long itemToRemoveId = item.getId();
         itemRepo.deleteById(itemToRemoveId);
         itemsCache.delete(REDIS_KEY, String.valueOf(itemToRemoveId));
         log.info("item removed from cache:{}", itemToRemoveId);
-        if (parent != null && parent.getChildItems().isEmpty()){
+        Item parent = item.getParentItem();
+        if (parent != null){
+            parent.getChildItems().remove(item);
             sendRequestForPackageUpdate(parent);
-            return removeSoldItemsFromDB(parent);
-        }else {
-            if (parent != null){
-                parent.getChildItems().remove(item);
+            if (parent.getChildItems().isEmpty()){
+                return removeSoldItemsFromDB(parent);
             }
-            sendRequestForPackageUpdate(parent);
-            return removeSoldItemsFromDB(null);
+        }else {
+            sendRequestForPackageUpdate(null);
         }
+        return removeSoldItemsFromDB(null);
     }
 
     private BrandName isValidBrand(Item item) {

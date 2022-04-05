@@ -1,165 +1,134 @@
 package com.marketplace.itemstorageservice.services;
 
+import com.marketplace.itemstorageservice.DTOmodels.ItemDetailedInfoDTO;
+import com.marketplace.itemstorageservice.configs.ServiceTestConfig;
+import com.marketplace.itemstorageservice.exceptions.CustomItemsException;
 import com.marketplace.itemstorageservice.models.BrandName;
 import com.marketplace.itemstorageservice.models.Item;
 import com.marketplace.itemstorageservice.models.ItemType;
 import com.marketplace.itemstorageservice.repositories.BrandNameRepo;
 import com.marketplace.itemstorageservice.repositories.ItemRepo;
-import com.marketplace.itemstorageservice.exceptions.CustomItemsException;
-import org.junit.jupiter.api.Disabled;
+import com.marketplace.itemstorageservice.utilFunctions.ItemUpdateInValidArguments;
+import com.marketplace.itemstorageservice.utilFunctions.ItemUpdateValidArguments;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.InOrder;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.jdbc.Sql;
 
-import java.util.Optional;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.given;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
 
-@Disabled
-@ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ContextConfiguration(initializers = ServiceTestConfig.Initializer.class, classes = {ServiceTestConfig.class})
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Sql(scripts = {"/db/changelog/changeSetTest/insert-into-BrandTable.sql"})
 class ItemServiceUpdateItemTest {
 
-    @Mock
-    private ItemRepo itemRepo;
+    private static final String REDIS_KEY = "itemstorage";
 
-    @Mock
-    private BrandNameRepo brandNameRepo;
+    @Autowired
+    ItemService itemService;
 
-    @InjectMocks
-    ItemServiceImpl itemService;
+    @Autowired
+    ItemRepo itemRepo;
 
-    @Test
-    @DisplayName("update item with inputs where parent is null, new serial, new brand and item type is ITEM")
-    void updateItemTest(){
-        BrandName brandOld = new BrandName("brand", "0.1");
-        brandOld.setId(1L);
-        BrandName brandNew = new BrandName("brand", "0.1");
-        brandNew.setId(1L);
-        Item parent = new Item(10L,brandOld,null,ItemType.PACK);
-        parent.setId(100L);
-        Long id = 1L;
-        Item itemFromDB = new Item(12L,brandOld,parent,ItemType.PACK);
-        itemFromDB.setId(id);
+    @Autowired
+    BrandNameRepo brandNameRepo;
 
-        // inputs for update
-        Item item = new Item(1L,brandNew, null, ItemType.ITEM);
+    @Autowired
+    @Qualifier("ItemCacheTemplate")
+    RedisTemplate<String, Item> itemsCacheTemplate;
 
-        // check if item id is corresponds with itemDB and brand is exists
-        given(itemRepo.findById(id)).willReturn(Optional.of(itemFromDB));
-        given(brandNameRepo.findById(itemFromDB.getBrandName().getId())).willReturn(Optional.of(brandOld));
-        given(brandNameRepo.getById(itemFromDB.getBrandName().getId())).willReturn(brandOld);
+    @Autowired
+    @Qualifier("updateItemRequest")
+    NewTopic updateItemTopic;
 
-        given(itemRepo.save(itemFromDB)).willAnswer(invocation -> invocation.getArgument(0));
-        itemService.updateItem(id,item);
+    @Autowired
+    KafkaTemplate<String, List<ItemDetailedInfoDTO>> kafkaTemplateMock;
 
-        assertSame(itemFromDB.getSerial(),item.getSerial());
-        assertSame(itemFromDB.getItem_type(), ItemType.ITEM);
-        assertNull(itemFromDB.getParentItem());
+    @DisplayName("update new item with valid inputs")
+    @ParameterizedTest(name = "test case: => itemId={0}, serial={1}, brandName={2}, parentId={3}, type={4}")
+    @ArgumentsSource(ItemUpdateValidArguments.class)
+    void updateItemTest(long itemId, long serial, String brandName, long parentId, ItemType type) {
+        //given
+        HashOperations<String, String, Item> itemsCache = itemsCacheTemplate.opsForHash();
+        BrandName brand = brandNameRepo.findByName(brandName);
+        Item itemFromDB = itemRepo.findById(itemId).orElse(null);
+        Item parentFromDB = itemFromDB!=null ? itemFromDB.getParentItem() : null;
 
-        verify(itemRepo,times(1)).findById(anyLong());
-        verify(brandNameRepo, times(1)).findById(anyLong());
-        verify(brandNameRepo, times(1)).getById(anyLong());
-        verify(itemRepo, times(1)).save(Mockito.any(Item.class));
-
+        Item parent = itemRepo.findById(parentId).orElse(null);
+        Item item = new Item(serial, brand, parent, type);
+        // check children count for parent in inputs and from database before item update
+        int childrenBeforeParentDB = parentFromDB != null ? parentFromDB.getChildItems().size() : 0;
+        int childrenBefore = parent != null ? parent.getChildItems().size() : 0;
+        //when
+        itemService.updateItem(itemId, item);
+        int childrenAfterParentDB;
+        int childrenAfter;
+        parentFromDB = parentFromDB!=null ? itemRepo.findById(parentFromDB.getId()).orElse(null) : null;
+        parent = itemRepo.findById(parentId).orElse(null);
+        //check children count after updating
+        //then -> if parent is exist for new item then children count must be incremented on 1,
+        if (parent==null && parentFromDB!=null){
+            childrenAfterParentDB = parentFromDB.getChildItems().size();
+            Item parentDBFromCache = itemsCache.get(REDIS_KEY, String.valueOf(parentFromDB.getId()));
+            assertNotNull(parentDBFromCache);
+            assertThat(childrenAfterParentDB).isEqualTo(childrenBeforeParentDB-1);
+        }
+        else if (parent!=null){
+            childrenAfter = parent.getChildItems().size();
+            Item parentFromCache = itemsCache.get(REDIS_KEY, String.valueOf(parentId));
+            assertNotNull(parentFromCache);
+            if (parentFromDB != null && !parent.getId().equals(parentFromDB.getId())){
+                Item parentDBFromCache = itemsCache.get(REDIS_KEY, String.valueOf(parentFromDB.getId()));
+                childrenAfterParentDB = parentFromDB.getChildItems().size();
+                assertNotNull(parentDBFromCache);
+                assertThat(childrenAfter).isEqualTo(childrenBefore+1);
+                assertThat(childrenAfterParentDB).isEqualTo(childrenBeforeParentDB-1);
+            }
+        }
+        else {
+            Item ItemFromCache = itemsCache.get(REDIS_KEY, String.valueOf(item.getId()));
+            assertNotNull(ItemFromCache);
+        }
     }
 
-    @Test
-    @DisplayName("failed to update item where inputs - parent type is ITEM")
-    void updateItemParentItemTypeIsITEMTest(){
-        BrandName brand = new BrandName("brand", "0.1");
-        brand.setId(1L);
-        Item parentOld = new Item(10L,brand,null,ItemType.PACK);
-        parentOld.setId(100L);
-        Item parentNew = new Item(10L,brand,null,ItemType.ITEM);
-        parentNew.setId(101L);
-        Long id = 1L;
-        Item itemFromDB = new Item(12L,brand,parentOld,ItemType.PACK);
-        itemFromDB.setId(id);
-
-        // inputs for update
-        Item item = new Item(1L,brand, parentNew, ItemType.ITEM);
-
-        // check if id is corresponds with itemDB and brand is exists
-        given(itemRepo.findById(id)).willReturn(Optional.of(itemFromDB));
-        given(brandNameRepo.findById(item.getBrandName().getId())).willReturn(Optional.of(brand));
-        given(brandNameRepo.getById(item.getBrandName().getId())).willReturn(brand);
-        given(itemRepo.findById(item.getParentItem().getId())).willReturn(Optional.of(parentNew));
-
-        assertThrows(CustomItemsException.class,()->itemService.updateItem(id,item));
-
-        assertSame(itemFromDB.getParentItem(), parentOld);
-
-        verify(itemRepo,times(2)).findById(anyLong());
-        verify(brandNameRepo, times(1)).findById(anyLong());
-        verify(brandNameRepo, times(1)).getById(anyLong());
-        verify(itemRepo, never()).save(Mockito.any(Item.class));
+    @DisplayName("update new item with valid inputs")
+    @ParameterizedTest(name = "test case: => itemId={0}, serial={1}, brandName={2}, parentId={3}, type={4}")
+    @ArgumentsSource(ItemUpdateInValidArguments.class)
+    void updateFailedItemTest(long itemId, long serial, String brandName, long parentId, ItemType type) {
+        //given -> mocked object to invoke exceptions on test cases
+        BrandName brand = brandNameRepo.findByName(brandName);
+        Item parent = itemRepo.findById(parentId).orElse(null);
+        Item item = new Item(serial, brand, parent, type);
+        itemServiceMocked();
+        //when and then
+        doThrow(CustomItemsException.class).when(itemService).updateItem(itemId, item);
+        InOrder order = Mockito.inOrder(itemRepo, itemService);
+        order.verify(itemRepo, never()).save(any(Item.class));
+        order.verify(itemService, never()).sendRequestForPackageUpdate(item);
     }
 
-    @Test
-    @DisplayName("failed to update item where brand not valid")
-    void updateItemBrandIsNotValidTest(){
-        BrandName brand = new BrandName("brand", "0.1");
-        brand.setId(1L);
-        Item parent = new Item(10L,brand,null,ItemType.PACK);
-        parent.setId(100L);
-        Long id = 1L;
-        Item itemFromDB = new Item(12L,brand,parent,ItemType.PACK);
-        itemFromDB.setId(id);
-
-        // inputs for update
-        BrandName brandNotValid = new BrandName("brand not valid", "0.1");
-        brandNotValid.setId(2L);
-        Item item = new Item(1L,brandNotValid, parent, ItemType.ITEM);
-
-        // check if id is corresponds with itemDB and brand is exists
-        given(itemRepo.findById(id)).willReturn(Optional.of(itemFromDB));
-        given(brandNameRepo.findById(item.getBrandName().getId())).willReturn(Optional.empty());
-
-        assertThrows(CustomItemsException.class,()->itemService.updateItem(id,item));
-
-        verify(itemRepo,times(2)).findById(anyLong());
-        verify(brandNameRepo, times(1)).findById(anyLong());
-        verify(itemRepo, never()).save(Mockito.any(Item.class));
+    private void itemServiceMocked(){
+        itemRepo = mock(ItemRepo.class);
+        brandNameRepo = mock(BrandNameRepo.class);
+        itemService = mock(ItemService.class);
     }
-
-    @Test
-    @DisplayName("failed to update item due to brand is not the same as brand in parent item")
-    void updateItemFailedParentBrandIsNotAsItemBrand() {
-        BrandName brandInParent = new BrandName("brand", "0.1");
-        brandInParent.setId(1L);
-        Item parent = new Item(10L, brandInParent, null, ItemType.PACK);
-        parent.setId(100L);
-        Item itemFromDB = new Item(12L,brandInParent,parent,ItemType.PACK);
-        Long id = 1L;
-        itemFromDB.setId(id);
-
-        // inputs for update
-        BrandName brandInItem = new BrandName("newBrand", "0.1");
-        brandInParent.setId(2L);
-        Item item = new Item(1L, brandInItem, parent, ItemType.ITEM);
-
-        InOrder order = Mockito.inOrder(brandNameRepo, itemRepo);
-
-        // check if brand is valid and exists
-        given(brandNameRepo.findById(item.getBrandName().getId())).willReturn(Optional.of(brandInItem));
-        given(brandNameRepo.getById(item.getBrandName().getId())).willReturn(brandInItem);
-        given(itemRepo.findById(item.getParentItem().getId())).willReturn(Optional.of(parent));
-
-        assertNotSame(item.getBrandName(), parent.getBrandName());
-        assertThrows(CustomItemsException.class, () -> itemService.createNewItem(item));
-
-        order.verify(brandNameRepo, times(0)).findById(anyLong());
-        order.verify(brandNameRepo, times(0)).getById(anyLong());
-        order.verify(itemRepo, times(1)).findById(anyLong());
-        order.verify(itemRepo, never()).save(Mockito.any(Item.class));
-    }
-
 }

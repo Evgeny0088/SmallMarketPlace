@@ -11,8 +11,7 @@ import com.marketplace.itemstorageservice.repositories.ItemRepo;
 import com.marketplace.itemstorageservice.utilFunctions.ItemCreationInValidArguments;
 import com.marketplace.itemstorageservice.utilFunctions.ItemCreationValidArguments;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.InOrder;
@@ -35,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @ActiveProfiles("test")
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(initializers = ServiceTestConfig.Initializer.class, classes = {ServiceTestConfig.class})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -63,16 +63,16 @@ class ItemServiceCreateItemTest {
     @Autowired
     KafkaTemplate<String, List<ItemDetailedInfoDTO>> kafkaTemplateMock;
 
-
+    @Order(1)
     @Test
     @DisplayName("get all items")
     void allItemsTest() {
-        List<Item> items = itemService.allItems();
         HashOperations<String, String, Item> itemsCache = itemsCacheTemplate.opsForHash();
-        itemsCache.get(REDIS_KEY, String.valueOf(items.get(0).getId()));
+        List<Item> items = itemService.allItems();
         assertThat(items.size()).isEqualTo(itemsCache.entries(REDIS_KEY).size());
     }
 
+    @Order(2)
     @DisplayName("create new item with valid inputs")
     @ParameterizedTest(name = "test case: => serial={0}, brandName={1}, parentId={2}, type={3}")
     @ArgumentsSource(ItemCreationValidArguments.class)
@@ -92,8 +92,6 @@ class ItemServiceCreateItemTest {
         //then
         assertThat(itemsAfter.size()).isEqualTo(itemsBefore.size()+1);
         //then -> if parent is exist for new item then children count must be incremented on 1,
-        //moreover we should check if kafka producer will send updated item package to another service,
-        //since we updated children count
         if (parent!=null){
             Item fromCache = itemsCache.get(REDIS_KEY, String.valueOf(parentId));
             assertNotNull(fromCache);
@@ -104,12 +102,12 @@ class ItemServiceCreateItemTest {
         }
     }
 
+    @Order(3)
     @DisplayName("create new item failed with invalid inputs")
     @ParameterizedTest(name = "test case: => serial={0}, brandName={1}, parentId={2}, type={3}")
     @ArgumentsSource(ItemCreationInValidArguments.class)
     void createNewItemFailedTest(long serial, String brandName, long parentId, ItemType type) {
         //given -> mocked object to invoke exceptions on test cases
-        List<Item> itemsBefore = itemService.allItems();
         BrandName brand = brandNameRepo.findByName(brandName);
         Item parent = itemRepo.findById(parentId).orElse(null);
         Item item = new Item(serial, brand, parent, type);
