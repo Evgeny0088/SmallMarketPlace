@@ -1,6 +1,7 @@
 package com.marketplace.itemstorageservice.services;
 
 import com.marketplace.itemstorageservice.DTOmodels.ItemDetailedInfoDTO;
+import com.marketplace.itemstorageservice.configs.KafkaContainerConfig;
 import com.marketplace.itemstorageservice.configs.ServiceTestConfig;
 import com.marketplace.itemstorageservice.exceptions.CustomItemsException;
 import com.marketplace.itemstorageservice.models.BrandName;
@@ -10,7 +11,8 @@ import com.marketplace.itemstorageservice.repositories.BrandNameRepo;
 import com.marketplace.itemstorageservice.repositories.ItemRepo;
 import com.marketplace.itemstorageservice.utilFunctions.ItemCreationInValidArguments;
 import com.marketplace.itemstorageservice.utilFunctions.ItemCreationValidArguments;
-import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -23,11 +25,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.KafkaMessageListenerContainer;
+import org.springframework.kafka.listener.MessageListener;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -56,12 +61,20 @@ class ItemServiceCreateItemTest {
     @Qualifier("ItemCacheTemplate")
     RedisTemplate<String, Item> itemsCacheTemplate;
 
-    @Autowired
-    @Qualifier("updateItemRequest")
-    NewTopic updateItemTopic;
+    public static KafkaMessageListenerContainer<String, List<ItemDetailedInfoDTO>> listenerContainer = KafkaContainerConfig.getContainer().getMessageContainer();
 
-    @Autowired
-    KafkaTemplate<String, List<ItemDetailedInfoDTO>> kafkaTemplateMock;
+    public static BlockingQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records = new BlockingArrayQueue<>();
+
+    @BeforeAll
+    static void init(){
+        listenerContainer.setupMessageListener((MessageListener<String, List<ItemDetailedInfoDTO>>)records::add);
+        listenerContainer.start();
+    }
+
+    @AfterAll
+    static void destroy(){
+        listenerContainer.stop();
+    }
 
     @Order(1)
     @Test
@@ -76,7 +89,7 @@ class ItemServiceCreateItemTest {
     @DisplayName("create new item with valid inputs")
     @ParameterizedTest(name = "test case: => serial={0}, brandName={1}, parentId={2}, type={3}")
     @ArgumentsSource(ItemCreationValidArguments.class)
-    void createNewItemTest(long serial, String brandName, long parentId, ItemType type) {
+    void createNewItemTest(long serial, String brandName, long parentId, ItemType type) throws InterruptedException {
         //given
         HashOperations<String, String, Item> itemsCache = itemsCacheTemplate.opsForHash();
         List<Item> itemsBefore = itemService.allItems();
@@ -84,15 +97,22 @@ class ItemServiceCreateItemTest {
         Item parent = itemRepo.findById(parentId).orElse(null);
         int childrenBefore = parent != null ? parent.getChildItems().size() : 0;
         Item item = new Item(serial, brand, parent, type);
-        //when
+
+        //when -> implement create Item method and get saved item from database
         itemService.createNewItem(item);
+        ConsumerRecord<String, List<ItemDetailedInfoDTO>> rec = records.poll(1, TimeUnit.SECONDS);
+        ItemDetailedInfoDTO itemDetailedInfoDTO = rec!=null ? rec.value().get(0) : null;
         List<Item> itemsAfter = itemService.allItems();
         parent = itemRepo.findById(parentId).orElse(null);
         int childrenAfter = parent != null ? parent.getChildItems().size() : 0;
-        //then
+
+        //then -> check if item inserted in db and item count in database in incremented by 1
         assertThat(itemsAfter.size()).isEqualTo(itemsBefore.size()+1);
+
         //then -> if parent is exist for new item then children count must be incremented on 1,
+        //also package must be updated and send to kafka topic for another service
         if (parent!=null){
+            assertNotNull(itemDetailedInfoDTO);
             Item fromCache = itemsCache.get(REDIS_KEY, String.valueOf(parentId));
             assertNotNull(fromCache);
             assertThat(childrenAfter).isEqualTo(childrenBefore+1);
@@ -112,6 +132,7 @@ class ItemServiceCreateItemTest {
         Item parent = itemRepo.findById(parentId).orElse(null);
         Item item = new Item(serial, brand, parent, type);
         itemServiceMocked();
+
         //when and then
         doThrow(CustomItemsException.class).when(itemService).createNewItem(item);
         InOrder order = Mockito.inOrder(itemRepo, itemService);
