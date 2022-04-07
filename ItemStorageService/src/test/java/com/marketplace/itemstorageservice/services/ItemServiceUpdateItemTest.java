@@ -31,13 +31,13 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
+import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.fetchPackagesFromKafka;
+import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.itemServiceMocked;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
@@ -100,7 +100,7 @@ class ItemServiceUpdateItemTest {
         // it can be two times per updateItem method:
         // when parent !=null AND parentDB!=null as well, that is why we put result into Map
         itemService.updateItem(itemId, item);
-        Map<Long, ItemDetailedInfoDTO> packages = fetchPackagesFromKafka();
+        Map<Long, ItemDetailedInfoDTO> packages = fetchPackagesFromKafka(records);
 
         int childrenAfterParentDB;
         int childrenAfter;
@@ -144,30 +144,12 @@ class ItemServiceUpdateItemTest {
         BrandName brand = brandNameRepo.findByName(brandName);
         Item parent = itemRepo.findById(parentId).orElse(null);
         Item item = new Item(serial, brand, parent, type);
-        itemServiceMocked();
+        itemServiceMocked(itemService, itemRepo, brandNameRepo);
 
         //when and then
         doThrow(CustomItemsException.class).when(itemService).updateItem(itemId, item);
         InOrder order = Mockito.inOrder(itemRepo, itemService);
         order.verify(itemRepo, never()).save(any(Item.class));
         order.verify(itemService, never()).sendRequestForPackageUpdate(item);
-    }
-
-    private void itemServiceMocked(){
-        itemRepo = mock(ItemRepo.class);
-        brandNameRepo = mock(BrandNameRepo.class);
-        itemService = mock(ItemService.class);
-    }
-
-    private Map<Long, ItemDetailedInfoDTO> fetchPackagesFromKafka() throws InterruptedException {
-        boolean flag = true;
-        Map<Long, ItemDetailedInfoDTO> packagesInKafka = new HashMap<>();
-        while (flag){
-            ConsumerRecord<String, List<ItemDetailedInfoDTO>> rc = records.poll(1, TimeUnit.SECONDS);
-            if (rc!=null)
-            rc.value().forEach(pack-> packagesInKafka.put(pack.getItemPackageId(), pack));
-            if (records.isEmpty())flag = false;
-        }
-        return packagesInKafka;
     }
 }
