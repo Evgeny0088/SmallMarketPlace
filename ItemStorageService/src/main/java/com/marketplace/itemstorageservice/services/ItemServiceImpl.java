@@ -196,7 +196,8 @@ public class ItemServiceImpl implements ItemService {
                     log.error(String.format("message failed to send, see stack trace below:\n%s", ex.getMessage()));
                 }
             });
-        }else {
+        }
+        else {
             log.info("there is no updates on packages, nothing to send!...");
         }
     }
@@ -216,8 +217,6 @@ public class ItemServiceImpl implements ItemService {
             if (parent.getChildItems().isEmpty()){
                 return removeSoldItemsFromDB(parent);
             }
-        }else {
-            sendRequestForPackageUpdate(null);
         }
         return removeSoldItemsFromDB(null);
     }

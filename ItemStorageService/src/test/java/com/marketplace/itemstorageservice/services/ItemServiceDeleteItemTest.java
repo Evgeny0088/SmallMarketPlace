@@ -7,6 +7,8 @@ import com.marketplace.itemstorageservice.models.Item;
 import com.marketplace.itemstorageservice.repositories.BrandNameRepo;
 import com.marketplace.itemstorageservice.repositories.ItemRepo;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -18,25 +20,31 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
+import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@ActiveProfiles("test")
+@ActiveProfiles("service-test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(initializers = ServiceTestConfig.Initializer.class, classes = {ServiceTestConfig.class})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Sql(scripts = {"/db/changelog/changeSetTest/insert-into-BrandTable.sql"})
+@Sql(scripts = {"/db/changelog/changeSetTest/insert-into-testTables.sql"})
 public class ItemServiceDeleteItemTest {
 
     private static final String REDIS_KEY = "itemstorage";
+    public static KafkaMessageListenerContainer<String, List<ItemDetailedInfoDTO>> listenerContainer;
+    public static BlockingQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records = new LinkedBlockingQueue<>();
 
     @Autowired
     ItemService itemService;
@@ -55,50 +63,82 @@ public class ItemServiceDeleteItemTest {
     @Qualifier("updateItemRequest")
     NewTopic updateItemTopic;
 
-    @Autowired
-    KafkaTemplate<String, List<ItemDetailedInfoDTO>> kafkaTemplateMock;
+    @AfterAll
+    static void destroy(){
+        if (listenerContainer!=null) listenerContainer.stop();
+    }
 
-    @DisplayName("delete item and all related children recursively")
+    @DisplayName("""
+            delete item and all related children recursively (cascade ALL)
+            also if parent has only deleted item, it also will be removed from database as empty package
+            """)
     @ParameterizedTest(name = "test case: => itemId={0}")
     @ValueSource(longs = {1,4,9,100})
-    void deleteItemTest(long itemId){
-        //given
+    void deleteItemTest(long itemId) throws InterruptedException {
+        //given -> fetch item from database
+        HashOperations<String, String, Item> itemsCache = itemsCacheTemplate.opsForHash();
+        listenerContainerSetup(records, listenerContainer, updateItemTopic);
         Item item = itemRepo.findById(itemId).orElse(null);
         //when
         if (item == null){
+            /*
+            when item is null then we simply throw custom exception
+            */
             itemServiceMocked();
-            //then
             doThrow(CustomItemsException.class).when(itemService).itemDeleted(itemId);
             InOrder order = Mockito.inOrder(itemRepo, itemService);
             order.verify(itemRepo, never()).save(Mockito.any(Item.class));
             order.verify(itemService, never()).sendRequestForPackageUpdate(item);
-        } else {
+        }
+        else {
+            /*
+            when item not null:
+            -> then remove from database and cache
+            -> check if item all item,s children also are removed as well
+            */
+            List<Long> itemChildren = item.getChildItems().stream().map(Item::getId).toList();
             Item parent = item.getParentItem();
-            int childrenCount = parent!=null ? parent.getChildItems().size() : 0;
             long parentId = parent!=null ? parent.getId() : -1L;
-            //then -> get parent of deleted item
-            //then-> check if item deleted and message is send
+            int parentChildrenBefore = parent!=null ? parent.getChildItems().size() : 0;
+
             String answer = itemService.itemDeleted(itemId);
-            assertThat(answer).contains(String.valueOf(itemId));
-            // then -> check if it is removed from redis cache
-            HashOperations<String, String, Item> itemsCache = itemsCacheTemplate.opsForHash();
+            Map<Long, ItemDetailedInfoDTO> packages = fetchPackagesFromKafka(records);
+
             Item fromCache = itemsCache.get(REDIS_KEY, String.valueOf(itemId));
+            checkIfAllChildrenAreRemoved(itemChildren, itemRepo, itemsCache, REDIS_KEY);
+            assertThat(answer).contains(String.valueOf(itemId));
             assertNull(fromCache);
-            //then -> check if all children is removed if exists from DB and redis cache
-            List<Long> children = item.getChildItems().stream().map(Item::getId).toList();
-            children.forEach(i->{
-                Item itemDB = itemRepo.findById(i).orElse(null);
-                Item childFromCache = itemsCache.get(REDIS_KEY, String.valueOf(i));
-                assertNull(itemDB);
-                assertNull(childFromCache);
-            });
-            //then if parent not null and do not have only deleted item, then it also must be deleted
-            if (parent!=null && childrenCount==1){
-                parent = itemRepo.findById(parentId).orElse(null);
-                //try to fetch parent from DB, and it must be null
-                fromCache = itemsCache.get(REDIS_KEY, String.valueOf(parentId));
-                assertNull(parent);
-                assertNull(fromCache);
+            //then check if item has parent
+            if (parent!=null){
+                //then -> if parent not null get children count BEFORE removal of the item
+                if (parentChildrenBefore>1){
+                    /*
+                    -> if children more than 1:
+                        -> fetch parent from database and get updated children count
+                        -> children count AFTER item removal must be decreased by 1
+                        -> updated package have been send to broker
+                     */
+                    parent = itemRepo.getById(parentId);
+                    int parentChildrenAfter = parent.getChildItems().size();
+                    assertEquals(parentChildrenAfter, parentChildrenBefore-1);
+                    assertTrue(packages.get(parentId).getItemsQuantityInPack()>0);
+                }
+                else {
+                    /*
+                    -> if children count BEFORE was 1:
+                        -> parent must be removed from database and cache as empty package
+                        -> send to broker as empty package, in order to inform another service that particular package is empty
+                     */
+                    parent = itemRepo.findById(parentId).orElse(null);
+                    fromCache = itemsCache.get(REDIS_KEY, String.valueOf(parentId));
+                    assertNull(parent);
+                    assertNull(fromCache);
+                    assertEquals(0, packages.get(parentId).getItemsQuantityInPack());
+                }
+            }
+            else {
+                // if parent is null -> then no call to broker
+                assertTrue(packages.isEmpty());
             }
         }
     }

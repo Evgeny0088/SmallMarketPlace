@@ -15,7 +15,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 public class ServiceTestConfig {
 
     @Container
-    public static CustomPostgresSQLContainer postgreSQLContainer = CustomPostgresSQLContainer.getInstance();
+    public static CustomPostgresSQLContainer postgresSQLContainer = CustomPostgresSQLContainer.getInstance();
 
     @Container
     public static KafkaContainerConfig kafkaContainer = KafkaContainerConfig.getContainer();
@@ -25,7 +25,7 @@ public class ServiceTestConfig {
 
     @AfterAll
     public static void destroy(){
-        postgreSQLContainer.stop();
+        postgresSQLContainer.stop();
         redisCustomContainer.stop();
         kafkaContainer.stop();
     }
@@ -35,15 +35,15 @@ public class ServiceTestConfig {
         public void initialize(@NotNull ConfigurableApplicationContext applicationContext) {
             applicationContext.addApplicationListener(event -> {
                 if (event instanceof ContextClosedEvent) {
-                    postgreSQLContainer.stop();
+                    postgresSQLContainer.stop();
                     kafkaContainer.stop();
                     redisCustomContainer.stop();
                 }
             });
             TestPropertyValues.of(
-                    "spring.datasource.url=" + postgreSQLContainer.getJdbcUrl(),
-                    "spring.datasource.username=" + postgreSQLContainer.getUsername(),
-                    "spring.datasource.password=" + postgreSQLContainer.getPassword(),
+                    "spring.datasource.url=" + postgresSQLContainer.getJdbcUrl(),
+                    "spring.datasource.username=" + postgresSQLContainer.getUsername(),
+                    "spring.datasource.password=" + postgresSQLContainer.getPassword(),
                     "spring.redis.host=" + redisCustomContainer.getContainerIpAddress(),
                     "spring.redis.port=" + redisCustomContainer.getMappedPort(redisCustomContainer.getRedisPort())
             ).applyTo(applicationContext.getEnvironment());

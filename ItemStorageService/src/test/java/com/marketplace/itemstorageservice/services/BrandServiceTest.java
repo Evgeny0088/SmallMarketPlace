@@ -17,14 +17,14 @@ import org.springframework.test.context.ContextConfiguration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
+import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.brandsPersist;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-@ActiveProfiles("test")
+@ActiveProfiles("service-test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(initializers = ServiceTestConfig.Initializer.class, classes = {ServiceTestConfig.class})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -39,7 +39,7 @@ public class BrandServiceTest {
     @DisplayName("post brands and get all brands from database")
     void getAllBrands(){
         //given
-        brandsPersist();
+        brandsPersist(brandService);
         //when
         List<BrandName> allBrands = brandService.allBrands();
         //then
@@ -59,11 +59,12 @@ public class BrandServiceTest {
         assertNotNull(brandFromDB);
         assertThat(brand.getName()).isEqualTo(brandFromDB.getName());
 
-        //######### test case when saving is failed #############
+        //######### test case when repeatable saving is failed #############
+        //given
         BrandNameRepo brandNameRepoMock = mock(BrandNameRepo.class);
         BrandServiceImpl brandServiceMock = spy(new BrandServiceImpl(brandNameRepoMock));
         //when
-        given(brandNameRepoMock.findByName(brandName)).willReturn(brand);
+        when(brandNameRepoMock.findByName(brandName)).thenReturn(brand);
         //then
         assertThrows(CustomItemsException.class,()-> brandServiceMock.postNewBrandName(brand));
         verify(brandNameRepoMock, never()).save(any(BrandName.class));
@@ -74,20 +75,20 @@ public class BrandServiceTest {
     @CsvSource({"brandDBExisted, updatedBrand"})
     void updateBrandTest(String brandFromDB, String updatedBrand) {
         //given -> we persist brand in database
-        brandService.postNewBrandName(new BrandName("brandDBExisted", "100"));
+        brandService.postNewBrandName(new BrandName(brandFromDB, "100"));
         BrandName brandDB = brandNameRepo.findByName(brandFromDB);
-        //then it is saved in database and exists
         assertNotNull(brandDB);
         //then -> update all params and save it again in DB
         brandDB.setName(updatedBrand);
         brandDB.setVersion("200");
         brandDB.setCreateDate(LocalDateTime.now());
         brandNameRepo.save(brandDB);
-        //given -> get updated brand from database and make sure that is not null
-        BrandName updatedBrandDB = brandNameRepo.findByName(updatedBrand);
+
+        //then -> get updated brand from database and make sure that is not null
         //then -> make sure it is not null and saved in database
-        // name is updated and id is kept the same as before since we are updating database object
+        BrandName updatedBrandDB = brandNameRepo.findByName(updatedBrand);
         assertNotNull(updatedBrandDB);
+        //then -> make sure that we override previous brandDB, with new name
         assertThat(updatedBrandDB.getId()).isEqualTo(brandDB.getId());
         assertThat(updatedBrandDB.getName()).isEqualTo(updatedBrand);
 
@@ -105,28 +106,23 @@ public class BrandServiceTest {
     }
 
     @Test
-    @DisplayName("delete Brand and throws exception when brand is not found by id")
+    @DisplayName("delete Brand and throw exception when brand is not found by id")
     void brandDeletedTest(){
         //given
         String removedBrand = "brandToRemove";
-        //when -> saving new brand and remove it from DB
+        //when -> save new brand and remove it from DB
         brandService.postNewBrandName(new BrandName(removedBrand, "100"));
         brandService.brandDeleted(brandNameRepo.findByName(removedBrand).getId());
         //then -> verify that it returns null when we try to search deleted brand from DB again
         assertNull(brandNameRepo.findByName(removedBrand));
 
         //######### test case when removal is failed #############
+
         BrandNameRepo brandNameRepoMock = mock(BrandNameRepo.class);
         BrandServiceImpl brandServiceMock = spy(new BrandServiceImpl(brandNameRepoMock));
         when(brandNameRepoMock.findById(anyLong())).thenReturn(Optional.empty());
         assertThrows(CustomItemsException.class,()->brandServiceMock.brandDeleted(anyLong()));
         verify(brandNameRepoMock, never()).deleteById(anyLong());
     }
-
-    private void brandsPersist(){
-        int[] range = new int[]{0,1,2};
-        IntStream.of(range).forEach(i->brandService.postNewBrandName(new BrandName(String.format("brand%s",i),"100")));
-    }
-
 }
 

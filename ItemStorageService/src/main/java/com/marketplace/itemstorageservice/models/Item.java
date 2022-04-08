@@ -43,7 +43,11 @@ import java.util.Set;
                      (select id, row_number() over (order by id) as child_row_number from items where item_type='ITEM' and parent_id=:parent_id)
                      delete from items where id in
                      (select id from childrenTable limit :items_count) and (select max(child_row_number) from childrenTable)>=:items_count        
-                     """)
+                     """),
+                @NamedNativeQuery(
+                        name = "removeAllItems",
+                        query = ("delete from items")
+                )
         })
 
 @SqlResultSetMapping(name="DTOModels.ItemDetailedInfoDTO",

@@ -33,12 +33,21 @@ import static org.mockito.Mockito.*;
 @ContextConfiguration(classes = {WireMockConfig.class})
 class ItemControllerWireMockTest {
 
+    private static final String URI_ITEMS = "/items";
+    private static final String URI_NEW_ITEM = "/items/new";
+    private static final String URI_UPDATE_ITEM = "/items/update?itemId=%s";
+    private static final String URI_DELETE_ITEM = "/items/delete/%s";
+    private static final String RESOURCE_FILE_BAD_REQUEST_JSON = "testResponsesItemController/ItemWrongCreation_BAD_REQUEST.json";
+
     @Autowired
     WireMockServer itemWireMockServer;
+
     @Autowired
     ObjectMapper objectMapper;
+
     @Autowired
     private WebTestClient webTestClient;
+
     @MockBean
     ItemServiceImpl itemService;
 
@@ -50,32 +59,36 @@ class ItemControllerWireMockTest {
     @Test
     @DisplayName("get all items from database")
     void allItemsTest() throws JsonProcessingException {
-        String uri = "/items";
-        String resourceBody = "testResponsesItemController/allItems.json";
+        //given
         String serialized = objectMapper.writeValueAsString(itemService.allItems());
-        wireMockServer_GET_With_OK_ResourceBody(itemWireMockServer,resourceBody, uri);
-        webTestClient_GET_With_OK_JsonBody(webTestClient, uri, serialized);
+        //then
+        wireMockServer_GET_With_OK_ResourceBody(itemWireMockServer, RESOURCE_FILE_BAD_REQUEST_JSON, URI_ITEMS);
+        webTestClient_GET_With_OK_JsonBody(webTestClient, URI_ITEMS, serialized);
     }
 
-    @DisplayName("create new Item valid params in request body")
+    @DisplayName("create new Item with valid params in request body")
     @ParameterizedTest(name = "test case: => serial={0}, brandId={1}, parentId={2}, item_type={3}")
     @CsvSource(value = {
             "100, 1, 2, ITEM",
             "100, 1, null, PACK",})
     void newItemTest(String serial, String brandId, String parentId, String itemType){
-        String uri = "/items/new";
+        //given
         String returnMessage = "new Item is created!";
         String requestBody = RequestBodyParser.requestBody(serial, brandId, parentId, itemType);
+        //when
         doAnswer(InvocationOnMock::getArguments).when(itemService).createNewItem(any(Item.class));
-
-        wireMockServer_POST_With_OK(itemWireMockServer, returnMessage, uri);
-        String actual = webTestClient_POST_With_OK_ReturnMessage(webTestClient, requestBody, uri);
+        //then
+        wireMockServer_POST_With_OK_ReturnMessage(itemWireMockServer, returnMessage, URI_NEW_ITEM);
+        String actual = webTestClient_POST_With_OK_ReturnMessage(webTestClient, requestBody, URI_NEW_ITEM);
 
         Assertions.assertTrue(actual.contains(returnMessage));
         Mockito.verify(itemService,times(1)).createNewItem(any(Item.class));
     }
 
-    @DisplayName("Item creation failed if one of the parameters in request body is invalid, it throws BAD_REQUEST")
+    @DisplayName("""
+            Item creation failed if one of the parameters in request body is invalid, it throws BAD_REQUEST.
+            Custom exceptions from service layer will be captured in service tests!
+            """)
     @ParameterizedTest(name = "test case: => serial={0}, brandId={1}, parentId={2}, item_type={3}")
     @CsvSource(value = {
             "100, null, 2, ITEM, BAD_REQUEST",
@@ -85,11 +98,11 @@ class ItemControllerWireMockTest {
             "100, 2, 1, NOT_VALID, BAD_REQUEST",
     })
     void newItemFailedBrandDoesNotExistTest(String serial, String brandId, String parentId, String itemType, String errorStatus){
-        String uri = "/items/new";
-        String resourceFile = "testResponsesItemController/ItemWrongCreation_BAD_REQUEST.json";
+        //when
         String requestBody = RequestBodyParser.requestBody(serial, brandId, parentId, itemType);
-        wireMockServer_POST_With_BAD_REQUEST(itemWireMockServer, resourceFile, uri);
-        webTestClient_POST_With_BAD_REQUEST(webTestClient,requestBody, uri, errorStatus);
+        //then
+        wireMockServer_POST_With_BAD_REQUEST(itemWireMockServer, RESOURCE_FILE_BAD_REQUEST_JSON, URI_NEW_ITEM);
+        webTestClient_POST_With_BAD_REQUEST(webTestClient,requestBody, URI_NEW_ITEM, errorStatus);
         Mockito.verify(itemService,never()).createNewItem(Mockito.any(Item.class));
     }
 
@@ -100,12 +113,14 @@ class ItemControllerWireMockTest {
             "1, 100, 1, null, PACK",
     })
     void updateItemTest(String itemId, String serial, String brandId, String parentId, String itemType){
-        String uri = String.format("/items/update?itemId=%s", itemId);
+        //given
+        String uri = String.format(URI_UPDATE_ITEM, itemId);
         String returnMessage = String.format("item with %s successfully updated", itemId);
         String requestBody = RequestBodyParser.requestBody(serial, brandId, parentId, itemType);
+        //when
         doAnswer(InvocationOnMock::getArguments).when(itemService).updateItem(anyLong(),any(Item.class));
-
-        wireMockServer_POST_With_OK(itemWireMockServer, returnMessage, uri);
+        //then
+        wireMockServer_POST_With_OK_ReturnMessage(itemWireMockServer, returnMessage, uri);
         String actual = webTestClient_POST_With_OK_ReturnMessage(webTestClient, requestBody, uri);
 
         Assertions.assertTrue(actual.contains(returnMessage));
@@ -125,32 +140,38 @@ class ItemControllerWireMockTest {
     void updateItemFailedBrandDoesNotExistTest(String itemId, String serial,
                                                String brandId, String parentId,
                                                String itemType, String errorStatus){
-        String uri = String.format("/items/update?itemId=%s", itemId);
-        String resourceFile = "testResponsesItemController/ItemWrongCreation_BAD_REQUEST.json";
+        //given
+        String uri = String.format(URI_UPDATE_ITEM, itemId);
         String requestBody = RequestBodyParser.requestBody(serial, brandId, parentId, itemType);
-
-        wireMockServer_POST_With_BAD_REQUEST(itemWireMockServer,resourceFile, uri);
+        //then
+        wireMockServer_POST_With_BAD_REQUEST(itemWireMockServer,RESOURCE_FILE_BAD_REQUEST_JSON, uri);
         webTestClient_POST_With_BAD_REQUEST(webTestClient,requestBody, uri, errorStatus);
-
         Mockito.verify(itemService,never()).createNewItem(Mockito.any(Item.class));
     }
 
-    @DisplayName("delete item from DB")
+    @DisplayName("""
+            delete item from DB.
+            if id is found then we remove item
+            if this not DIGIT, then input validation fails and throws BAD_REQUEST
+                    """)
     @ParameterizedTest(name = "test case: => itemId={0}")
     @ValueSource(strings = {"1", "NOT_DIGIT"})
     void itemIsDeletedTest(String itemId){
-        String uri = String.format("/items/delete/%s", itemId);
+        //given
+        String uri = String.format(URI_DELETE_ITEM, itemId);
         int times = 0;
         if (itemId.matches("\\d")){
+            //when id is valid digit
             String returnMessage = String.format("item with <%s> is deleted!", itemId);
             when(itemService.itemDeleted(Long.parseLong(itemId))).thenReturn(returnMessage);
+            //then
             wireMockServer_GET_With_OK_ReturnMessage(itemWireMockServer, returnMessage, uri);
             webTestClient_GET_With_OK_ResponseBody(webTestClient, uri);
             times = 1;
         }else {
-            String resourceFile = "testResponsesItemController/ItemWrongCreation_BAD_REQUEST.json";
+            //if id is NOT digit then throw BAD_REQUEST
             String errorStatus = "BAD_REQUEST";
-            wireMockServer_GET_With_BAD_REQUEST(itemWireMockServer, resourceFile, uri);
+            wireMockServer_GET_With_BAD_REQUEST(itemWireMockServer, RESOURCE_FILE_BAD_REQUEST_JSON, uri);
             webTestClient_GET_With_BAD_REQUEST(webTestClient, uri, errorStatus);
         }
         Mockito.verify(itemService, times(times)).itemDeleted(anyLong());

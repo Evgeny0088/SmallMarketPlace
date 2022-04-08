@@ -1,7 +1,6 @@
 package com.marketplace.itemstorageservice.services;
 
 import com.marketplace.itemstorageservice.DTOmodels.ItemDetailedInfoDTO;
-import com.marketplace.itemstorageservice.configs.KafkaContainerConfig;
 import com.marketplace.itemstorageservice.configs.ServiceTestConfig;
 import com.marketplace.itemstorageservice.exceptions.CustomItemsException;
 import com.marketplace.itemstorageservice.models.BrandName;
@@ -9,11 +8,11 @@ import com.marketplace.itemstorageservice.models.Item;
 import com.marketplace.itemstorageservice.models.ItemType;
 import com.marketplace.itemstorageservice.repositories.BrandNameRepo;
 import com.marketplace.itemstorageservice.repositories.ItemRepo;
-import com.marketplace.itemstorageservice.utilFunctions.ItemUpdateInValidArguments;
+import com.marketplace.itemstorageservice.utilFunctions.ItemUpdateInvalidArguments;
 import com.marketplace.itemstorageservice.utilFunctions.ItemUpdateValidArguments;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -26,7 +25,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
-import org.springframework.kafka.listener.MessageListener;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
@@ -37,19 +35,21 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.fetchPackagesFromKafka;
-import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.itemServiceMocked;
+import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.listenerContainerSetup;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@ActiveProfiles("test")
+@ActiveProfiles("service-test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(initializers = ServiceTestConfig.Initializer.class, classes = {ServiceTestConfig.class})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Sql(scripts = {"/db/changelog/changeSetTest/insert-into-BrandTable.sql"})
+@Sql(scripts = {"/db/changelog/changeSetTest/insert-into-testTables.sql"})
 class ItemServiceUpdateItemTest {
 
     private static final String REDIS_KEY = "itemstorage";
+    public static KafkaMessageListenerContainer<String, List<ItemDetailedInfoDTO>> listenerContainer;
+    public static BlockingQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records = new LinkedBlockingQueue<>();
 
     @Autowired
     ItemService itemService;
@@ -61,67 +61,78 @@ class ItemServiceUpdateItemTest {
     BrandNameRepo brandNameRepo;
 
     @Autowired
+    @Qualifier("updateItemRequest")
+    NewTopic updateItemTopic;
+
+    @Autowired
     @Qualifier("ItemCacheTemplate")
     RedisTemplate<String, Item> itemsCacheTemplate;
 
-    public static KafkaMessageListenerContainer<String, List<ItemDetailedInfoDTO>> listenerContainer = KafkaContainerConfig.getContainer().getMessageContainer();
-
-    public static BlockingQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records = new LinkedBlockingQueue<>();
-
-    @BeforeAll
-    static void init(){
-        listenerContainer.setupMessageListener((MessageListener<String, List<ItemDetailedInfoDTO>>)records::add);
-        listenerContainer.start();
-    }
-
     @AfterAll
     static void destroy(){
-        listenerContainer.stop();
+        if (listenerContainer!=null) listenerContainer.stop();
     }
 
     @DisplayName("update new item with valid inputs")
     @ParameterizedTest(name = "test case: => itemId={0}, serial={1}, brandName={2}, parentId={3}, type={4}")
     @ArgumentsSource(ItemUpdateValidArguments.class)
     void updateItemTest(long itemId, long serial, String brandName, long parentId, ItemType type) throws InterruptedException {
-        //given
+        /*
+        given:
+        -> setup cache, kafka consumer with specified topic
+        -> fetch current item and parent(parentFromDB) from database if exists
+        -> check if new parent exists in database
+        */
         HashOperations<String, String, Item> itemsCache = itemsCacheTemplate.opsForHash();
+        listenerContainerSetup(records, listenerContainer, updateItemTopic);
         BrandName brand = brandNameRepo.findByName(brandName);
         Item itemFromDB = itemRepo.findById(itemId).orElse(null);
         Item parentFromDB = itemFromDB!=null ? itemFromDB.getParentItem() : null;
 
-        Item parent = itemRepo.findById(parentId).orElse(null);
-        Item item = new Item(serial, brand, parent, type);
+        Item newParent = itemRepo.findById(parentId).orElse(null);
+        Item item = new Item(serial, brand, newParent, type);
 
-        // check children count for parent in inputs and from database before item update
+        //get children items count for parentFromDB BEFORE update
+        //get children items count for updated newParent BEFORE update
         int childrenBeforeParentDB = parentFromDB != null ? parentFromDB.getChildItems().size() : 0;
-        int childrenBefore = parent != null ? parent.getChildItems().size() : 0;
+        int childrenBefore = newParent != null ? newParent.getChildItems().size() : 0;
 
-        //when -> update we check if any package was stored into kafka
-        // it can be two times per updateItem method:
-        // when parent !=null AND parentDB!=null as well, that is why we put result into Map
+        /*
+        when:
+        -> update current item with new inputs
+        -> send updated package to broker - there are can be two situations:
+            -> send updated package when one of the parents is null (updated newParent or parentFromDB)
+            -> send updated packages TWO times when both parents NOT null (two calls to broker)
+        */
         itemService.updateItem(itemId, item);
         Map<Long, ItemDetailedInfoDTO> packages = fetchPackagesFromKafka(records);
 
+        //set children counts AFTER update for newParent and parentFromDB
+        //fetch parents from database after update
         int childrenAfterParentDB;
         int childrenAfter;
-
         parentFromDB = parentFromDB!=null ? itemRepo.findById(parentFromDB.getId()).orElse(null) : null;
-        parent = itemRepo.findById(parentId).orElse(null);
-        //check children count after updating
-        //then -> if parent is exist for new item then children count must be incremented on 1,
-        if (parent==null && parentFromDB!=null){
+        newParent = itemRepo.findById(parentId).orElse(null);
+
+        /*
+        then:
+        -> if newParent exists for updated item then children count must be incremented on 1,
+        -> if parentFromDB(former parent) not null then children count must be decreased on 1
+        -> in case if parents are the same for updated item OR parents ARE null, then children count remains the same, therefore we DO NOT call to broker
+        */
+        if (newParent==null && parentFromDB!=null){
             childrenAfterParentDB = parentFromDB.getChildItems().size();
             Item parentDBFromCache = itemsCache.get(REDIS_KEY, String.valueOf(parentFromDB.getId()));
             assertNotNull(packages.get(parentFromDB.getId()));
             assertNotNull(parentDBFromCache);
             assertThat(childrenAfterParentDB).isEqualTo(childrenBeforeParentDB-1);
         }
-        else if (parent!=null){
-            childrenAfter = parent.getChildItems().size();
+        else if (newParent!=null){
+            childrenAfter = newParent.getChildItems().size();
             Item parentFromCache = itemsCache.get(REDIS_KEY, String.valueOf(parentId));
             assertNotNull(packages.get(parentId));
             assertNotNull(parentFromCache);
-            if (parentFromDB != null && !parent.getId().equals(parentFromDB.getId())){
+            if (parentFromDB != null && !newParent.getId().equals(parentFromDB.getId())){
                 Item parentDBFromCache = itemsCache.get(REDIS_KEY, String.valueOf(parentFromDB.getId()));
                 childrenAfterParentDB = parentFromDB.getChildItems().size();
                 assertNotNull(packages.get(parentFromDB.getId()));
@@ -132,24 +143,32 @@ class ItemServiceUpdateItemTest {
         }
         else {
             Item ItemFromCache = itemsCache.get(REDIS_KEY, String.valueOf(item.getId()));
+            assertTrue(packages.isEmpty());
             assertNotNull(ItemFromCache);
         }
     }
 
-    @DisplayName("update new item with valid inputs")
+    @DisplayName("update failed with invalid inputs")
     @ParameterizedTest(name = "test case: => itemId={0}, serial={1}, brandName={2}, parentId={3}, type={4}")
-    @ArgumentsSource(ItemUpdateInValidArguments.class)
+    @ArgumentsSource(ItemUpdateInvalidArguments.class)
     void updateFailedItemTest(long itemId, long serial, String brandName, long parentId, ItemType type) {
         //given -> mocked object to invoke exceptions on test cases
         BrandName brand = brandNameRepo.findByName(brandName);
-        Item parent = itemRepo.findById(parentId).orElse(null);
-        Item item = new Item(serial, brand, parent, type);
-        itemServiceMocked(itemService, itemRepo, brandNameRepo);
+        Item newParent = itemRepo.findById(parentId).orElse(null);
+        Item item = new Item(serial, brand, newParent, type);
+        itemServiceMocked();
 
-        //when and then
+        //when -> updated method is called it must throw exception with specified inputs
         doThrow(CustomItemsException.class).when(itemService).updateItem(itemId, item);
+        //then -> check if updated item was not saved and package wasn,t updated, hence never called to broker
         InOrder order = Mockito.inOrder(itemRepo, itemService);
         order.verify(itemRepo, never()).save(any(Item.class));
         order.verify(itemService, never()).sendRequestForPackageUpdate(item);
+    }
+
+    private void itemServiceMocked(){
+        itemRepo = mock(ItemRepo.class);
+        brandNameRepo = mock(BrandNameRepo.class);
+        itemService = mock(ItemService.class);
     }
 }
