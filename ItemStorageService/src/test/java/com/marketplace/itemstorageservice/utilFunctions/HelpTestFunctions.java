@@ -1,15 +1,12 @@
 package com.marketplace.itemstorageservice.utilFunctions;
 
 import com.marketplace.itemstorageservice.DTOmodels.ItemDetailedInfoDTO;
-import com.marketplace.itemstorageservice.configs.KafkaContainerConfig;
 import com.marketplace.itemstorageservice.models.BrandName;
 import com.marketplace.itemstorageservice.models.Item;
 import com.marketplace.itemstorageservice.repositories.ItemRepo;
 import com.marketplace.itemstorageservice.services.BrandService;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.listener.MessageListener;
 
@@ -30,9 +27,7 @@ public class HelpTestFunctions {
     }
 
     public static void listenerContainerSetup(BlockingQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records,
-                                              KafkaMessageListenerContainer<String, List<ItemDetailedInfoDTO>> listenerContainer,
-                                              NewTopic topic){
-        listenerContainer = KafkaContainerConfig.getContainer().getMessageContainer(topic);
+                                              KafkaMessageListenerContainer<String, List<ItemDetailedInfoDTO>> listenerContainer){
         listenerContainer.setupMessageListener((MessageListener<String, List<ItemDetailedInfoDTO>>)records::add);
         listenerContainer.start();
     }

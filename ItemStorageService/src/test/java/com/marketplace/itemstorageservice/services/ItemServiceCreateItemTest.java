@@ -1,6 +1,7 @@
 package com.marketplace.itemstorageservice.services;
 
 import com.marketplace.itemstorageservice.DTOmodels.ItemDetailedInfoDTO;
+import com.marketplace.itemstorageservice.configs.KafkaContainerConfig;
 import com.marketplace.itemstorageservice.configs.ServiceTestConfig;
 import com.marketplace.itemstorageservice.exceptions.CustomItemsException;
 import com.marketplace.itemstorageservice.models.BrandName;
@@ -76,9 +77,11 @@ class ItemServiceCreateItemTest {
     @Qualifier("allPackagesTopic")
     NewTopic allPackagesTopic;
 
-    @AfterAll
-    static void destroy(){
-        if (listenerContainer!=null) listenerContainer.stop();
+    @AfterEach
+    void destroy(){
+        if (listenerContainer!=null){
+            Runtime.getRuntime().addShutdownHook(new Thread(()->listenerContainer.stop()));
+        }
     }
 
     @Order(1)
@@ -102,8 +105,9 @@ class ItemServiceCreateItemTest {
     @ValueSource(booleans = {false, true})
     void loadAllPackagesTest(boolean isNothingToSend) throws InterruptedException {
         //given -> setup kafka listener for packages retrieval from kafka if they have been send
+        listenerContainer = KafkaContainerConfig.getContainer().getMessageContainer(allPackagesTopic);
+        listenerContainerSetup(records,listenerContainer);
         Map<Long, ItemDetailedInfoDTO> packages;
-        listenerContainerSetup(records, listenerContainer, allPackagesTopic);
         //then
         if (!isNothingToSend){ //case when we have something to send
             loadAllPackages.loadAllItemsFromDB();
@@ -143,8 +147,9 @@ class ItemServiceCreateItemTest {
 
         //given -> setup kafka listener for packages retrieval from kafka if they have been send
         //given -> prepare redis cache hashset client
-        listenerContainerSetup(records, listenerContainer, updateItemTopic);
         HashOperations<String, String, Item> itemsCache = itemsCacheTemplate.opsForHash();
+        listenerContainer = KafkaContainerConfig.getContainer().getMessageContainer(updateItemTopic);
+        listenerContainerSetup(records,listenerContainer);
 
         /*
         when:
@@ -193,7 +198,6 @@ class ItemServiceCreateItemTest {
         -> mocked object to invoke exceptions on test cases
         -> setup listener with specific topic
         */
-        listenerContainerSetup(records, listenerContainer, updateItemTopic);
         BrandName brand = brandNameRepo.findByName(brandName);
         Item parent = itemRepo.findById(parentId).orElse(null);
         Item item = new Item(serial, brand, parent, type);

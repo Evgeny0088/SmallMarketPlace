@@ -1,6 +1,7 @@
 package com.marketplace.itemstorageservice.services;
 
 import com.marketplace.itemstorageservice.DTOmodels.ItemDetailedInfoDTO;
+import com.marketplace.itemstorageservice.configs.KafkaContainerConfig;
 import com.marketplace.itemstorageservice.configs.ServiceTestConfig;
 import com.marketplace.itemstorageservice.exceptions.CustomItemsException;
 import com.marketplace.itemstorageservice.models.BrandName;
@@ -12,7 +13,7 @@ import com.marketplace.itemstorageservice.utilFunctions.ItemUpdateInvalidArgumen
 import com.marketplace.itemstorageservice.utilFunctions.ItemUpdateValidArguments;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -48,8 +49,8 @@ import static org.mockito.Mockito.*;
 class ItemServiceUpdateItemTest {
 
     private static final String REDIS_KEY = "itemstorage";
-    public static KafkaMessageListenerContainer<String, List<ItemDetailedInfoDTO>> listenerContainer;
     public static BlockingQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records = new LinkedBlockingQueue<>();
+    public static KafkaMessageListenerContainer<String, List<ItemDetailedInfoDTO>> listenerContainer;
 
     @Autowired
     ItemService itemService;
@@ -68,9 +69,11 @@ class ItemServiceUpdateItemTest {
     @Qualifier("ItemCacheTemplate")
     RedisTemplate<String, Item> itemsCacheTemplate;
 
-    @AfterAll
-    static void destroy(){
-        if (listenerContainer!=null) listenerContainer.stop();
+    @AfterEach
+    void destroy(){
+        if (listenerContainer!=null){
+            Runtime.getRuntime().addShutdownHook(new Thread(()->listenerContainer.stop()));
+        }
     }
 
     @DisplayName("update new item with valid inputs")
@@ -84,7 +87,9 @@ class ItemServiceUpdateItemTest {
         -> check if new parent exists in database
         */
         HashOperations<String, String, Item> itemsCache = itemsCacheTemplate.opsForHash();
-        listenerContainerSetup(records, listenerContainer, updateItemTopic);
+        listenerContainer = KafkaContainerConfig.getContainer().getMessageContainer(updateItemTopic);
+        listenerContainerSetup(records,listenerContainer);
+
         BrandName brand = brandNameRepo.findByName(brandName);
         Item itemFromDB = itemRepo.findById(itemId).orElse(null);
         Item parentFromDB = itemFromDB!=null ? itemFromDB.getParentItem() : null;

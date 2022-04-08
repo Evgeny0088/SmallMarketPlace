@@ -1,6 +1,7 @@
 package com.marketplace.itemstorageservice.services;
 
 import com.marketplace.itemstorageservice.DTOmodels.ItemDetailedInfoDTO;
+import com.marketplace.itemstorageservice.configs.KafkaContainerConfig;
 import com.marketplace.itemstorageservice.configs.ServiceTestConfig;
 import com.marketplace.itemstorageservice.exceptions.CustomItemsException;
 import com.marketplace.itemstorageservice.models.Item;
@@ -8,8 +9,7 @@ import com.marketplace.itemstorageservice.repositories.BrandNameRepo;
 import com.marketplace.itemstorageservice.repositories.ItemRepo;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
@@ -63,9 +63,15 @@ public class ItemServiceDeleteItemTest {
     @Qualifier("updateItemRequest")
     NewTopic updateItemTopic;
 
-    @AfterAll
-    static void destroy(){
-        if (listenerContainer!=null) listenerContainer.stop();
+    @BeforeEach
+    void init(){
+        listenerContainer = KafkaContainerConfig.getContainer().getMessageContainer(updateItemTopic);
+        listenerContainerSetup(records,listenerContainer);
+    }
+
+    @AfterEach
+    void destroy(){
+        Runtime.getRuntime().addShutdownHook(new Thread(()->listenerContainer.stop()));
     }
 
     @DisplayName("""
@@ -77,7 +83,6 @@ public class ItemServiceDeleteItemTest {
     void deleteItemTest(long itemId) throws InterruptedException {
         //given -> fetch item from database
         HashOperations<String, String, Item> itemsCache = itemsCacheTemplate.opsForHash();
-        listenerContainerSetup(records, listenerContainer, updateItemTopic);
         Item item = itemRepo.findById(itemId).orElse(null);
         //when
         if (item == null){
