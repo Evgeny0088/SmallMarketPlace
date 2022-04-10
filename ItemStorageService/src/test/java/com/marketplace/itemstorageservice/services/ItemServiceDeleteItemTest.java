@@ -26,6 +26,7 @@ import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,8 @@ import static org.mockito.Mockito.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(initializers = ServiceTestConfig.Initializer.class, classes = {ServiceTestConfig.class})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Sql(scripts = {"/db/changelog/changeSetTest/insert-into-testTables.sql"})
+@Sql(scripts = {"/db/changelog/changeSetTest/insert-into-testTables.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = {"/db/changelog/changeSetTest/remove-after-test.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class ItemServiceDeleteItemTest {
 
     private static final String REDIS_KEY = "itemstorage";
@@ -77,6 +79,7 @@ public class ItemServiceDeleteItemTest {
         }
     }
 
+    @Transactional
     @DisplayName("""
             delete item and all related children recursively (cascade ALL)
             also if parent has only deleted item, it also will be removed from database as empty package

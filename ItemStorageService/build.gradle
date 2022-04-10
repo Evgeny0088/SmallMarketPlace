@@ -88,6 +88,10 @@ task ItemStorageService(type: Jar, dependsOn: shadowJar) {
 
 tasks.build.dependsOn tasks.ItemStorageService
 
+//task sampleTest(type: Test) {
+//    filter { includeTestsMatching '*<Specific_Test_Name>*' }
+//}
+
 tasks.named('test') {
     useJUnitPlatform()
 }
