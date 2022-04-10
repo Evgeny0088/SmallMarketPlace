@@ -13,8 +13,7 @@ import org.springframework.kafka.listener.MessageListener;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -26,20 +25,20 @@ public class HelpTestFunctions {
         IntStream.of(range).forEach(i->brandService.postNewBrandName(new BrandName(String.format("brand%s",i),"100")));
     }
 
-    public static void listenerContainerSetup(BlockingQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records,
+    public static void listenerContainerSetup(ConcurrentLinkedQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records,
                                               KafkaMessageListenerContainer<String, List<ItemDetailedInfoDTO>> listenerContainer){
         listenerContainer.setupMessageListener((MessageListener<String, List<ItemDetailedInfoDTO>>)records::add);
         listenerContainer.start();
     }
 
     public static Map<Long, ItemDetailedInfoDTO> fetchPackagesFromKafka(
-            BlockingQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records) throws InterruptedException {
+            ConcurrentLinkedQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records) throws InterruptedException {
         boolean flag = true;
         Map<Long, ItemDetailedInfoDTO> packagesInKafka = new HashMap<>();
-        // sleep 1 second, waiting for kafka consumer receive all messages in topic
-        Thread.sleep(1000);
+        // sleep a bit, waiting for kafka consumer receive all messages in topic
+        Thread.sleep(2000);
         while (flag){
-            ConsumerRecord<String, List<ItemDetailedInfoDTO>> rc = records.poll(1, TimeUnit.SECONDS);
+            ConsumerRecord<String, List<ItemDetailedInfoDTO>> rc = records.poll();
             if (rc!=null)
                 rc.value().forEach(pack-> packagesInKafka.put(pack.getItemPackageId(), pack));
             if (records.isEmpty())flag = false;

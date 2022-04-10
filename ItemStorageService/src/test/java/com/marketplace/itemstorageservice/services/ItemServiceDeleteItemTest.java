@@ -9,7 +9,9 @@ import com.marketplace.itemstorageservice.repositories.BrandNameRepo;
 import com.marketplace.itemstorageservice.repositories.ItemRepo;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
@@ -27,8 +29,7 @@ import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -44,7 +45,7 @@ public class ItemServiceDeleteItemTest {
 
     private static final String REDIS_KEY = "itemstorage";
     public static KafkaMessageListenerContainer<String, List<ItemDetailedInfoDTO>> listenerContainer;
-    public static BlockingQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records = new LinkedBlockingQueue<>();
+    public static ConcurrentLinkedQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records = new ConcurrentLinkedQueue<>();
 
     @Autowired
     ItemService itemService;
@@ -71,7 +72,9 @@ public class ItemServiceDeleteItemTest {
 
     @AfterEach
     void destroy(){
-        Runtime.getRuntime().addShutdownHook(new Thread(()->listenerContainer.stop()));
+        if (listenerContainer!=null){
+            Runtime.getRuntime().addShutdownHook(new Thread(()->listenerContainer.stop()));
+        }
     }
 
     @DisplayName("""

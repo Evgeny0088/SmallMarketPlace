@@ -13,7 +13,6 @@ import com.marketplace.itemstorageservice.utilFunctions.ItemCreationInvalidArgum
 import com.marketplace.itemstorageservice.utilFunctions.ItemCreationValidArguments;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -33,7 +32,7 @@ import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.fetchPackagesFromKafka;
 import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.listenerContainerSetup;
@@ -50,7 +49,7 @@ import static org.mockito.Mockito.*;
 class ItemServiceCreateItemTest {
 
     private static final String REDIS_KEY = "itemstorage";
-    public static BlockingQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records = new BlockingArrayQueue<>();
+    public static ConcurrentLinkedQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records = new ConcurrentLinkedQueue<>();
     public static KafkaMessageListenerContainer<String, List<ItemDetailedInfoDTO>> listenerContainer;
 
     @Autowired

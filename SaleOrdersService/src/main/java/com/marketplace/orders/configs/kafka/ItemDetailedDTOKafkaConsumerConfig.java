@@ -3,6 +3,7 @@ package com.marketplace.orders.configs.kafka;
 import com.marketplace.orders.DTOModels.ItemDetailedInfoDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -23,7 +24,7 @@ public class ItemDetailedDTOKafkaConsumerConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String kafkaServer;
 
-    @Value("${spring.kafka.producer.client-id}")
+    @Value("${spring.kafka.consumer.client-id}")
     private String consumer_group_id;
 
     @Bean
@@ -33,6 +34,7 @@ public class ItemDetailedDTOKafkaConsumerConfig {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ItemDetailedDTOKafkaDeserializer.class);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, consumer_group_id);
+        props.put(ConsumerConfig.DEFAULT_ISOLATION_LEVEL, "read_committed");
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
         return props;
     }

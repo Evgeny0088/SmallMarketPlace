@@ -3,6 +3,7 @@ package com.marketplace.itemstorageservice.configs.kafka;
 import com.marketplace.itemstorageservice.DTOmodels.ItemSoldDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +25,7 @@ public class ItemKafkaConsumerConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String kafkaServer;
 
-    @Value("${spring.kafka.producer.client-id}")
+    @Value("${spring.kafka.consumer.group-id}")
     private String consumer_group_id;
 
     private Map<String, Object> consumerConfigs() {

@@ -5,6 +5,7 @@ import com.marketplace.itemstorageservice.exceptions.CustomItemsException;
 import com.marketplace.itemstorageservice.models.BrandName;
 import com.marketplace.itemstorageservice.repositories.BrandNameRepo;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +37,9 @@ public class BrandServiceTest {
     @Autowired
     BrandService brandService;
 
+    @Order(0)
     @Test
+    @Transactional
     @DisplayName("post brands and get all brands from database")
     void getAllBrands(){
         //given
@@ -46,6 +50,7 @@ public class BrandServiceTest {
         assertEquals(3, allBrands.size());
     }
 
+    @Order(1)
     @Test
     @DisplayName("post brand and verify that brand with the same name won,t be persisted again")
     void postNewBrand(){
@@ -70,6 +75,7 @@ public class BrandServiceTest {
         verify(brandNameRepoMock, never()).save(any(BrandName.class));
     }
 
+    @Order(2)
     @DisplayName("update brand if exists and if request inputs are correct")
     @ParameterizedTest(name = "test case: => brand={0}")
     @CsvSource({"brandDBExisted, updatedBrand"})
@@ -105,6 +111,7 @@ public class BrandServiceTest {
         verify(brandNameRepoMock, never()).save(any(BrandName.class));
     }
 
+    @Order(3)
     @Test
     @DisplayName("delete Brand and throw exception when brand is not found by id")
     void brandDeletedTest(){

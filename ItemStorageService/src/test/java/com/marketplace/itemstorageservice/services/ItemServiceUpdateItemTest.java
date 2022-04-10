@@ -15,6 +15,7 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.InOrder;
@@ -32,13 +33,13 @@ import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.fetchPackagesFromKafka;
 import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.listenerContainerSetup;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ActiveProfiles("service-test")
@@ -49,7 +50,7 @@ import static org.mockito.Mockito.*;
 class ItemServiceUpdateItemTest {
 
     private static final String REDIS_KEY = "itemstorage";
-    public static BlockingQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records = new LinkedBlockingQueue<>();
+    public static ConcurrentLinkedQueue<ConsumerRecord<String, List<ItemDetailedInfoDTO>>> records = new ConcurrentLinkedQueue<>();
     public static KafkaMessageListenerContainer<String, List<ItemDetailedInfoDTO>> listenerContainer;
 
     @Autowired
@@ -76,6 +77,7 @@ class ItemServiceUpdateItemTest {
         }
     }
 
+    @Order(1)
     @DisplayName("update new item with valid inputs")
     @ParameterizedTest(name = "test case: => itemId={0}, serial={1}, brandName={2}, parentId={3}, type={4}")
     @ArgumentsSource(ItemUpdateValidArguments.class)
@@ -153,6 +155,7 @@ class ItemServiceUpdateItemTest {
         }
     }
 
+    @Order(2)
     @DisplayName("update failed with invalid inputs")
     @ParameterizedTest(name = "test case: => itemId={0}, serial={1}, brandName={2}, parentId={3}, type={4}")
     @ArgumentsSource(ItemUpdateInvalidArguments.class)
