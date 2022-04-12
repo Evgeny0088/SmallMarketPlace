@@ -36,7 +36,7 @@ public class HelpTestFunctions {
         boolean flag = true;
         Map<Long, ItemDetailedInfoDTO> packagesInKafka = new HashMap<>();
         // sleep a bit, waiting for kafka consumer receive all messages in topic
-        Thread.sleep(2000);
+        Thread.sleep(1000);
         while (flag){
             ConsumerRecord<String, List<ItemDetailedInfoDTO>> rc = records.poll();
             if (rc!=null)

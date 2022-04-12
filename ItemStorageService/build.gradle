@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'com.marketplace'
-version = '0.1'
+version = '1.0'
 
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
@@ -77,21 +77,66 @@ dependencyManagement {
     }
 }
 
-task ItemStorageService(type: Jar, dependsOn: shadowJar) {
-    archiveBaseName.set('ItemStorageService')
-    archiveVersion.set('0.1')
+//######### TEST TASKS ##########
+
+task wireMockTests(type: Test) {
+    description("batch of tests of rest-api via wiremock server and webtest client")
+    filter { includeTestsMatching 'com.marketplace.itemstorageservice.controller.*' }
+    useJUnitPlatform()
+}
+
+task brandService(type: Test) {
+    description("tests of BrandService class")
+    filter { includeTestsMatching 'BrandServiceTest' }
+    useJUnitPlatform()
+}
+
+task itemCreation(type: Test) {
+    description("tests of ItemService class - > cover only item creation cases")
+    filter { includeTestsMatching 'ItemServiceCreateItemTest' }
+    useJUnitPlatform()
+}
+
+task itemDeletion(type: Test) {
+    description("tests of ItemService class - > cover only item delete cases")
+    filter { includeTestsMatching 'ItemServiceDeleteItemTest' }
+    useJUnitPlatform()
+
+}
+
+task itemUpdate(type: Test) {
+    description("tests of ItemService class - > cover only item update cases")
+    filter { includeTestsMatching 'ItemServiceUpdateItemTest' }
+    useJUnitPlatform()
+}
+
+task testsRun(type:Test){
+    dependsOn(tasks.named('wireMockTests'))
+    dependsOn(tasks.named('brandService'))
+    dependsOn(tasks.named('itemCreation'))
+    dependsOn(tasks.named('itemDeletion'))
+    dependsOn(tasks.named('itemUpdate'))
+    testLogging {
+        events "passed", "failed", "skipped"
+    }
+}
+
+//######### JAR TASKS ##########
+
+var service_version = '1.0'
+var jar_name = 'itemStorage-service'
+
+task ItemStorageShadow(type: Jar, dependsOn: shadowJar) {
+    archiveBaseName.set("${jar_name}-shadowJar")
+    archiveVersion.set("${service_version}")
     manifest {
         attributes 'Main-Class': 'com.marketplace.itemstorageservice.ItemStorageServiceApplication.java'
     }
     from zipTree(shadowJar.archiveFile)
 }
 
-tasks.build.dependsOn tasks.ItemStorageService
-
-//task sampleTest(type: Test) {
-//    filter { includeTestsMatching '*<Specific_Test_Name>*' }
-//}
-
-tasks.named('test') {
-    useJUnitPlatform()
+bootJar {
+    archiveFileName.set("${jar_name}-boot-${service_version}.jar")
 }
+
+tasks.build.dependsOn(tasks.named("ItemStorageShadow"))

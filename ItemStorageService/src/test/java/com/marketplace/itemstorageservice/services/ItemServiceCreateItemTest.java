@@ -29,13 +29,13 @@ import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.fetchPackagesFromKafka;
-import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.listenerContainerSetup;
+import static com.marketplace.itemstorageservice.utilFunctions.HelpTestFunctions.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -93,6 +93,7 @@ class ItemServiceCreateItemTest {
         assertThat(items.size()).isEqualTo(itemsCache.entries(REDIS_KEY).size());
     }
 
+    @Transactional
     @Order(2)
     @DisplayName("""
                 load all packages in kafka broker.

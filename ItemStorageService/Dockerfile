@@ -1,10 +1,10 @@
 FROM openjdk
-ARG JAR_FILE=build/libs/itemStorageService-0.1.jar
+ARG JAR_FILE=build/libs/itemStorage-service-boot-1.0.jar
 RUN useradd -ms /bin/bash evgeny88
 RUN mkdir -p /home/evgeny88/itemStorageService/
 WORKDIR /home/evgeny88/itemStorageService/
 RUN chown -R evgeny88:evgeny88 ./
-COPY ${JAR_FILE} /itemStorageService-0.1.jar  
+COPY ${JAR_FILE} /itemStorage-service-boot-1.0.jar
 USER evgeny88
 EXPOSE 8081
-ENTRYPOINT ["java","-jar","/itemStorageService-0.1.jar"]
+ENTRYPOINT ["java","-jar","/itemStorage-service-boot-1.0.jar"]
