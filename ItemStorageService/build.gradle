@@ -1,6 +1,7 @@
 plugins {
     id 'idea'
     id 'java'
+    id "nebula.integtest" version "9.6.3"
     id 'org.springframework.boot' version '2.6.2'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
@@ -77,7 +78,20 @@ dependencyManagement {
     }
 }
 
+integrationTest{
+    useJUnitPlatform()
+}
+
 //######### TEST TASKS ##########
+
+plugins.apply("nebula.integtest")
+facets {
+    integTest {
+        parentSourceSet = 'main'
+        testTaskName = 'integrationTest'
+        includeInCheckLifecycle = false
+    }
+}
 
 task wireMockTests(type: Test) {
     description("batch of tests of rest-api via wiremock server and webtest client")
