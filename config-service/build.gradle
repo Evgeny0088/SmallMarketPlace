@@ -29,13 +29,21 @@ dependencyManagement {
 	}
 }
 
-task ConfigService(type: Jar, dependsOn: shadowJar) {
-	archiveBaseName.set('configService')
-	archiveVersion.set('0.1')
-	manifest{
-		attributes 'Main-Class': 'com.marketplace.configservice.ConfigServiceApplication'
+//######### JAR TASKS ##########
+var service_version = '1.0'
+var jar_name = 'config-service'
+
+task ConfigServiceShadow(type: Jar, dependsOn: shadowJar) {
+	archiveBaseName.set("${jar_name}-shadowJar")
+	archiveVersion.set("${service_version}")
+	manifest {
+		attributes 'Main-Class': 'com.marketplace.configservice.ConfigServiceApplication.java'
 	}
 	from zipTree(shadowJar.archiveFile)
 }
 
-tasks.build.dependsOn tasks.ConfigService
+bootJar {
+	archiveFileName.set("${jar_name}-boot-${service_version}.jar")
+}
+
+tasks.build.dependsOn tasks.ConfigServiceShadow
