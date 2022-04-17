@@ -4,7 +4,7 @@ UPSET="\U0001f62D";
 FIRED="\U0001f525";
 DOCKER="\U0001f433";
 JAR="\U0001f680";
-DOCKER_IMAGE='evgeny88docker/itemstorage-service:1.0'
+DOCKER_IMAGE='evgeny88docker/config-service:1.0'
 
 echo -e "start to create jar file... ${JAR}"
 

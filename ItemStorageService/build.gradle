@@ -139,7 +139,9 @@ task testsRun(type:Test){
 //######### JAR TASKS ##########
 
 var service_version = '1.0'
-var jar_name = 'itemStorage-service'
+var jar_name = 'itemstorage-service'
+var spring_profile='spring.profiles.active'
+var profile_value='dev'
 
 task ItemStorageShadow(type: Jar, dependsOn: shadowJar) {
     archiveBaseName.set("${jar_name}-shadowJar")
@@ -152,6 +154,19 @@ task ItemStorageShadow(type: Jar, dependsOn: shadowJar) {
 
 bootJar {
     archiveFileName.set("${jar_name}-boot-${service_version}.jar")
+}
+
+//######### LOCAL RUN ##########
+
+tasks.register("rundev") {
+    group = "application"
+    description = "Runs the Spring Boot application with the dev profile"
+    doFirst {
+        tasks.bootRun.configure {
+            systemProperty("${spring_profile}", "${profile_value}")
+        }
+    }
+    finalizedBy("bootRun")
 }
 
 tasks.build.dependsOn(tasks.named("ItemStorageShadow"))

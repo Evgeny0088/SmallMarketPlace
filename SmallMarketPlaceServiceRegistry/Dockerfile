@@ -7,4 +7,4 @@ RUN chown -R evgeny88:evgeny88 ./
 COPY ${JAR_FILE} /registry-service-boot-1.0.jar
 USER evgeny88
 EXPOSE 8761
-ENTRYPOINT ["java","-jar", "-Dspring.profiles.active=eurekaserver", "/registry-service-boot-1.0.jar"]
+ENTRYPOINT ["java","-jar", "-Dspring.profiles.active=dev", "/registry-service-boot-1.0.jar"]

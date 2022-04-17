@@ -10,7 +10,6 @@ import java.io.IOException;
 
 public class ItemDetailedDTORedisSerializer extends JdkSerializationRedisSerializer {
 
-
     @Override
     public Object deserialize(byte[] bytes) {
         ObjectMapper mapper = new ObjectMapper();

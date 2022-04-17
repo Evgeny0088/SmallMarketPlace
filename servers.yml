@@ -4,9 +4,9 @@ services:
     image: postgres:13
     container_name: itemstorageDB
     environment:
-      POSTGRES_PASSWORD: Primera77!
-      POSTGRES_USER: evgeny88
-      POSTGRES_DB: itemstorage
+      POSTGRES_PASSWORD: "${POSTGRES_PASS:-pass}"
+      POSTGRES_USER: "${POSTGRES_USER:-usr}"
+      POSTGRES_DB: "${POSTGRES_ITEMSTORAGE:-demoDB}"
       POSTGRES_HOST: itemstorageDB
     ports:
       - "5433:5432"
@@ -18,9 +18,9 @@ services:
     image: postgres:13
     container_name: saleordersDB
     environment:
-      POSTGRES_PASSWORD: Primera77!
-      POSTGRES_USER: evgeny88
-      POSTGRES_DB: saleorders
+      POSTGRES_PASSWORD: "${POSTGRES_PASS:-pass}"
+      POSTGRES_USER: "${POSTGRES_USER:-usr}"
+      POSTGRES_DB: "${POSTGRES_SALEORDERS:-demoDB}"
       POSTGRES_HOST: saleordersDB
     ports:
       - "5434:5432"
@@ -67,7 +67,7 @@ services:
     command: redis-server --requirepass Primera77!
     restart: always
     environment:
-      REDIS_PASSWORD: Primera77!
+      REDIS_PASSWORD: "${REDIS_PASS:-redis}"
       REDIS_REPLICATION_MODE: master
     networks:
       - proxynet
