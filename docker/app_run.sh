@@ -1,6 +1,7 @@
 #!/bin/bash
 UPLOAD='\U0001f680';
 LAUGH='\U0001f602';
+UPSET="\U0001f62D";
 DOCKER='\U0001f433';
 DOCKER_HUB='evgeny88docker';
 
@@ -18,7 +19,7 @@ echo -e "Starting to load service images from repositoty...${UPLOAD}\n"
 for image in "${images[@]}";
     do
       if ! docker pull ${image}; then
-         echo -e "${image} image not found >>> please create new image!...\n"
+         echo -e "${image} image not found >>> please create new image!...${UPSET}\n"
          set -e
       else
          echo -e "image found!... ${DOCKER}\n"
