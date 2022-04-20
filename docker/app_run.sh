@@ -26,8 +26,12 @@ for image in "${images[@]}";
       fi
     done
 
-docker-compose -f servers.yml -f services.yml up --no-build &&\
-docker-compose -f services.yml down --rmi local &&\
-docker-compose -f servers.yml down --rmi local
+if ! docker-compose -f servers.yml -f services.yml up --no-build; then
+   echo -e "cannot start application due to one of the images failed to start!...${UPSET}\n"
+   docker-compose -f services.yml -f servers.yml down --rmi local
+   set -e
+else
+    \&& docker-compose -f services.yml -f servers.yml down --rmi local
+fi
 
 

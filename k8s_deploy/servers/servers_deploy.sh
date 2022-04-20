@@ -1,0 +1,1 @@
+kubectl apply -f zookeeper_deploy.yml -f kafka_deploy.yml
