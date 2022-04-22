@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: saleorders-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: '/mnt/data'
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: saleorders-db  
+  name: saleorders-volume-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: saleorders-db
+spec:
+  selector:
+    matchLabels:
+      app: saleorders-db
+  serviceName: "saleorders-db-service"
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: saleorders-db
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: saleorders-db
+        image: postgres:13
+        imagePullPolicy: "IfNotPresent"
+        ports:
+        - containerPort: 5432
+        env:
+          - name: POSTGRES_HOST
+            valueFrom:
+              secretKeyRef:
+                name: saleorders-secrets
+                key: POSTGRES_HOST
+          - name: POSTGRES_DB
+            valueFrom:
+              secretKeyRef:
+                name: saleorders-secrets
+                key: POSTGRES_DB
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: saleorders-secrets
+                key: POSTGRES_USER
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: saleorders-secrets
+                key: POSTGRES_PASS
+        volumeMounts:
+        - name: saleorders-volume-claim
+          mountPath: '/data/postgres/saleorders'
+      volumes:
+        - name: saleorders-volume-claim
+          persistentVolumeClaim:
+            claimName: saleorders-volume-claim
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: saleorders-db-service
+  labels:
+    app: saleorders-db-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: salorders-port
+      port: 5432
+      targetPort: 5432
+  selector:
+    app: saleorders-db
+
+
+
+
+
+
+
+
+
+
+
+
+

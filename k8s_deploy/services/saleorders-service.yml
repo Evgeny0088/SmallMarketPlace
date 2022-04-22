@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: saleorders-service
+  labels:
+    app: saleorders-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: saleorders-service
+  template:
+    metadata:
+      labels:
+        app: saleorders-service
+    spec:
+      containers:
+        - name: saleorders-service
+          image: evgeny88docker/saleorders-service:1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8082
+          env:
+            # POSTGRES ENVS
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: saleorders-secrets
+                  key: POSTGRES_HOST
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: saleorders-secrets
+                  key: POSTGRES_DB
+            - name: spring.datasource.username
+              valueFrom:
+                secretKeyRef:
+                  name: saleorders-secrets
+                  key: POSTGRES_USER
+            - name: spring.datasource.password
+              valueFrom:
+                secretKeyRef:
+                  name: saleorders-secrets
+                  key: POSTGRES_PASS
+            - name: spring.datasource.url
+              value: "jdbc:postgresql://saleorders-db-service:5432/$(POSTGRES_DB)?serverTimezone=UTC&createDatabaseIfNotExist=true&autoReconnect=true&allowPublicKeyRetrieval=true&useSSL=false"
+            # REDIS ENVS
+            - name: spring.redis.host
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: REDIS_HOST
+            - name: spring.redis.password
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: REDIS_PASS
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: saleorders-service
+spec:
+  ports:
+    - targetPort: 8082
+      port: 80
+  selector:
+    app: saleorders-service

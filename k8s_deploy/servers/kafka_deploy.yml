@@ -20,13 +20,18 @@ spec:
             - containerPort: 9092
           env:
             - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
-              value: "PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT"
+              value: "HOST:PLAINTEXT"
             - name: KAFKA_BROKER_ID
               value: "1"
+            - name: KAFKA_LISTENERS
+              value: "HOST://localhost:9092"
             - name: KAFKA_ADVERTISED_LISTENERS
-              value: "PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:30092"
+              value: "HOST://localhost:9092"
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "HOST"
             - name: KAFKA_ZOOKEEPER_CONNECT
-              value: "zookeeper:2181/30181"
+              value: "zookeeper:2181"
+
 ---
 
 apiVersion: v1
@@ -36,11 +41,10 @@ metadata:
     app: kafka-service
   name: kafka-service
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - name: kafka-port
       port: 9092
-      nodePort: 30092
       targetPort: 9092
   selector:
     app: kafka

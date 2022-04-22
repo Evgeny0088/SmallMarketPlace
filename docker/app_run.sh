@@ -31,7 +31,7 @@ if ! docker-compose -f servers.yml -f services.yml up --no-build; then
    docker-compose -f services.yml -f servers.yml down --rmi local
    set -e
 else
-    \&& docker-compose -f services.yml -f servers.yml down --rmi local
+   docker-compose -f services.yml -f servers.yml down --rmi local
 fi
 
 
