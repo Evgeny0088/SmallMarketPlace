@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-maps
+data:
+  # KAFKA DATA
+  KAFKA_BOOTSTRAP: "localhost:9092"  

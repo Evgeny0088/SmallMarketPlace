@@ -7,7 +7,7 @@ metadata:
 spec:
   storageClassName: manual
   capacity:
-    storage: 1Gi
+    storage: 10Mi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
@@ -27,7 +27,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      storage: 10Mi
 
 ---
 
@@ -40,7 +40,7 @@ spec:
     matchLabels:
       app: itemstorage-db
   serviceName: "itemstorage-db-service"
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:

@@ -17,11 +17,54 @@ spec:
       containers:
         - name: itemstorage-service
           image: evgeny88docker/itemstorage-service:1.0
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081
-
+          env:
+            # POSTGRES ENVS
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: items-secrets
+                  key: POSTGRES_HOST
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: items-secrets
+                  key: POSTGRES_DB
+            - name: spring.datasource.username
+              valueFrom:
+                secretKeyRef:
+                  name: items-secrets
+                  key: POSTGRES_USER
+            - name: spring.datasource.password
+              valueFrom:
+                secretKeyRef:
+                  name: items-secrets
+                  key: POSTGRES_PASS
+            - name: spring.datasource.url
+              value: "jdbc:postgresql://itemstorage-db-service:5432/$(POSTGRES_DB)?serverTimezone=UTC&createDatabaseIfNotExist=true&autoReconnect=true&allowPublicKeyRetrieval=true&useSSL=false"
+            # REDIS ENVS
+            - name: spring.redis.host
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: REDIS_HOST
+            - name: spring.redis.password
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: REDIS_PASS
+            # KAFKA ENVS
+            - name: KAFKA_BSTR
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-maps
+                  key: KAFKA_BOOTSTRAP
+            - name: spring.kafka.bootstrap-servers
+              value: "http://$(KAFKA_BSTR)"
 ---
+
 apiVersion: v1
 kind: Service
 metadata:

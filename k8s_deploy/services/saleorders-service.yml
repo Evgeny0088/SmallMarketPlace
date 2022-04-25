@@ -17,7 +17,7 @@ spec:
       containers:
         - name: saleorders-service
           image: evgeny88docker/saleorders-service:1.0
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
           env:
@@ -55,7 +55,14 @@ spec:
                 secretKeyRef:
                   name: redis-secrets
                   key: REDIS_PASS
-
+            # KAFKA ENVS
+            - name: KAFKA_BSTR
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-maps
+                  key: KAFKA_BOOTSTRAP
+            - name: spring.kafka.bootstrap-servers
+              value: "http://$(KAFKA_BSTR)"
 ---
 
 apiVersion: v1

@@ -131,4 +131,4 @@ spec:
         accessModes: [ "ReadWriteMany" ]
         resources:
           requests:
-            storage: 500Mi
+            storage: 10Mi
