@@ -36,6 +36,7 @@ public class ItemDetailedDTOKafkaConsumerConfig {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, consumer_group_id);
         props.put(ConsumerConfig.DEFAULT_ISOLATION_LEVEL, "read_committed");
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
+        props.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG,"read_committed");
         return props;
     }
 

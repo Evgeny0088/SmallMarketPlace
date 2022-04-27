@@ -14,8 +14,6 @@ spec:
       nodePort: 30010
   selector:
     name: redis-primary
-status:
-  loadBalancer: {}
 
 ---
 
@@ -35,8 +33,6 @@ spec:
       nodePort: 30011
   selector:
     name: redis-replica
-status:
-  loadBalancer: {}
 
 ---
 
@@ -63,8 +59,6 @@ spec:
         - name: redis
           image: redis
           env:
-            - name: REDIS_HOST
-              value: redis-primary-0
             - name: redis_pass
               valueFrom:
                 secretKeyRef:
@@ -73,8 +67,8 @@ spec:
           command:
             - "redis-server"
           args:
-            - "--requirepass"
-            - "$(redis_pass)"
+            - "--protected-mode"
+            - "no"
           ports:
             - containerPort: 6379
           volumeMounts:
@@ -115,20 +109,14 @@ spec:
       containers:
         - name: redis
           image: redis
-          env:
-            - name: redis_pass
-              valueFrom:
-                secretKeyRef:
-                  name: redis-secrets
-                  key: REDIS_PASS
           command:
             - "redis-server"
           args:
             - "--slaveof"
             - "redis-primary-svc"
             - "6379"
-            - "--masterauth"
-            - "$(redis_pass)"
+            - "--protected-mode"
+            - "no"
           volumeMounts:
             - name: datadir
               mountPath: /data/redis_data
@@ -144,4 +132,3 @@ spec:
         resources:
           requests:
             storage: 10Mi
-

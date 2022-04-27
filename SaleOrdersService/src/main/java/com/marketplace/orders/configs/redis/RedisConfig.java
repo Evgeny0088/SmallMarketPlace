@@ -7,10 +7,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisClientConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.time.Duration;
 
 @Configuration
 @EnableRedisRepositories
@@ -23,25 +26,38 @@ public class RedisConfig {
     @Value("${spring.redis.port}")
     private int port;
 
-    @Value("${spring.redis.database}")
-    private int database;
-
     @Value("${spring.redis.password}")
     private String password;
 
+    //for k8s connection
     @Bean
-    @Primary
-    RedisStandaloneConfiguration connectionConfiguration(){
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
-        config.setPassword(password);
-        config.setDatabase(database);
-        return config;
+    public JedisConnectionFactory jedisConnectionFactoryUpdated() {
+        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
+        redisStandaloneConfiguration.setHostName("172.17.0.9");
+        redisStandaloneConfiguration.setPort(port);
+        redisStandaloneConfiguration.setPassword(password);
+
+        JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfiguration = JedisClientConfiguration.builder();
+        jedisClientConfiguration.connectTimeout(Duration.ofSeconds(60));// 60s connection timeout
+        jedisClientConfiguration.usePooling();
+        return new JedisConnectionFactory(redisStandaloneConfiguration,
+                jedisClientConfiguration.build());
     }
 
-    @Bean
-    public JedisConnectionFactory connectionFactory() {
-        return new JedisConnectionFactory(connectionConfiguration());
-    }
+    // for docker local docker run
+//    @Bean
+//    @Primary
+//    RedisStandaloneConfiguration connectionConfiguration(){
+//        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
+//        config.setPassword(password);
+//        return config;
+//    }
+//
+//    @Bean
+//    public JedisConnectionFactory connectionFactory() {
+//        return new JedisConnectionFactory(connectionConfiguration());
+//    }
+
 
     @Bean(name = "ItemDetailedDTOPackages")
     public RedisTemplate<String, ItemDetailedInfoDTO> itemPackagesTemplate(){
@@ -50,7 +66,7 @@ public class RedisConfig {
         template.setHashKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new ItemDetailedDTORedisSerializer());
         template.setHashValueSerializer(new ItemDetailedDTORedisSerializer());
-        template.setConnectionFactory(connectionFactory());
+        template.setConnectionFactory(jedisConnectionFactoryUpdated());
         template.setEnableTransactionSupport(true);
         template.afterPropertiesSet();
         return template;

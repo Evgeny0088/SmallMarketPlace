@@ -59,7 +59,7 @@ services:
   redis:
     image: redis
     container_name: redis_cache
-    hostname: redishost
+    hostname: ${REDIS_HOST:-localhost}
     ports:
       - "6378:6379"
     expose:

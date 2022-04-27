@@ -27,7 +27,7 @@ public class ItemConsumerServiceImpl implements ItemConsumerService<String, Item
     }
 
     @KafkaListener(topics = {"${itemDTO.topic.name_1}"}, groupId = "${spring.kafka.consumer.client-id}",
-            containerFactory = "ItemDetailedDTOUpdateConsumerFactory")
+                                                containerFactory = "ItemDetailedDTOUpdateConsumerFactory")
     public void receiveAllPackagesFromItemStorage(List<ItemDetailedInfoDTO> itemList) {
         if (!itemList.isEmpty()){
             redisTransactionalAction(itemList, itemPackagesCache);

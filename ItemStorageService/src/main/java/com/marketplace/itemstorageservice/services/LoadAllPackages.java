@@ -32,7 +32,7 @@ public class LoadAllPackages {
 
     public void loadAllItemsFromDB(){
         List<ItemDetailedInfoDTO> allItems = itemDTOservice.allItems();
-        ListenableFuture<SendResult<String, List<ItemDetailedInfoDTO>>> future = allItemsListProducer.send(allPackagesTopic.name(),"0",allItems);
+        ListenableFuture<SendResult<String, List<ItemDetailedInfoDTO>>> future = allItemsListProducer.send(allPackagesTopic.name(),"0", allItems);
         future.addCallback(new ListenableFutureCallback<>() {
             @Override
             public void onSuccess(SendResult<String, List<ItemDetailedInfoDTO>> result) {
