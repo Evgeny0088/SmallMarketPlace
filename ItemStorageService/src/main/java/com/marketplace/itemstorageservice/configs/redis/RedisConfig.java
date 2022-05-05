@@ -36,8 +36,7 @@ public class RedisConfig {
         JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfiguration = JedisClientConfiguration.builder();
         jedisClientConfiguration.connectTimeout(Duration.ofSeconds(60));// 60s connection timeout
         jedisClientConfiguration.usePooling();
-        return new JedisConnectionFactory(redisStandaloneConfiguration,
-                jedisClientConfiguration.build());
+        return new JedisConnectionFactory(redisStandaloneConfiguration, jedisClientConfiguration.build());
     }
 
     // for docker local docker run

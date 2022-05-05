@@ -169,4 +169,4 @@ tasks.register("rundev") {
     finalizedBy("bootRun")
 }
 
-tasks.build.dependsOn(tasks.named("ItemStorageShadow"))
+tasks.build.dependsOn(tasks.named("testsRun"))

@@ -19,15 +19,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
-
 @TestComponent
 public class KafkaContainerConfig extends KafkaContainer{
 
     private static final Logger log = LoggerFactory.getLogger(KafkaContainerConfig.class);
     private static final String IMAGE_VERSION = "confluentinc/cp-kafka:7.0.0";
-    private static final String GROUP_ID_CONFIG_NAME = "sale-orders";
+    private static final String GROUP_ID_CONFIG_NAME = "item-storage";
     private static KafkaContainerConfig kafkaContainer;
 
     private KafkaContainerConfig() {

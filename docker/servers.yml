@@ -40,7 +40,9 @@ services:
     image: confluentinc/cp-kafka:7.0.0
     container_name: kafka-broker
     ports:
-      - "9092:29092"
+      - "9092:9092"
+    expose:
+      - "29092"
     depends_on:
       - zookeeper
     environment:

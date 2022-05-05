@@ -10,8 +10,8 @@ public class CustomPostgresSQLContainer extends PostgreSQLContainer<CustomPostgr
 
     private static CustomPostgresSQLContainer container;
     private static final String DATA_BASE_NAME = "itemstoragetest";
-    private static final String USERNAME = "evgeny88";
-    private static final String PASSWORD = "Primera77!";
+    private static final String USERNAME = "usr";
+    private static final String PASSWORD = "pass";
 
     private static final String IMAGE_VERSION = "postgres:13";
 
