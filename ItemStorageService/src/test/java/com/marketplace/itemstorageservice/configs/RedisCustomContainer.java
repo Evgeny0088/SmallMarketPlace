@@ -11,7 +11,7 @@ public class RedisCustomContainer extends GenericContainer<RedisCustomContainer>
 
     private static final int REDIS_PORT = 6379;
     private static final String IMAGE_VERSION = "redis:latest";
-    private static final String PASSWORD = "Primera77!";
+    private static final String PASSWORD = "redis";
     private static final String COMMAND = String.format("redis-server --requirepass %s",PASSWORD);
     private static RedisCustomContainer container;
 

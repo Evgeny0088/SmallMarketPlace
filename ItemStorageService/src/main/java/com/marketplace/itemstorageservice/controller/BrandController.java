@@ -133,7 +133,7 @@ public class BrandController {
                     content = @Content(mediaType = "application/json"))
     })
     @RequestMapping(method = RequestMethod.GET, value = "/delete/{id}")
-    public ResponseEntity<String> brandIsDeleted(@PathVariable("id") Long id){
+    public ResponseEntity<String> brandIsDeleted(@Valid @PathVariable("id") Long id){
         String responseBody = brandService.brandDeleted(id);
         HttpHeaders headers = Utils.httpHeader("delete brand","item is deleted from DB");
         return ResponseEntity.status(HttpStatus.OK).headers(headers).body(responseBody);

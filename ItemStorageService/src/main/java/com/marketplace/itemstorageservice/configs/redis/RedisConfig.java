@@ -28,7 +28,7 @@ public class RedisConfig {
     @Value("${spring.redis.password}")
     private String password;
 
-//    //for k8s connection
+//   for k8s connection
     @Bean
     public JedisConnectionFactory jedisConnectionFactoryUpdated() {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(host, port);
@@ -38,21 +38,6 @@ public class RedisConfig {
         jedisClientConfiguration.usePooling();
         return new JedisConnectionFactory(redisStandaloneConfiguration, jedisClientConfiguration.build());
     }
-
-    // for docker local docker run
-//    @Bean
-//    @Primary
-//    RedisStandaloneConfiguration connectionConfiguration(){
-//        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
-//        config.setPassword(password);
-//        return config;
-//    }
-
-//    @Bean
-//    public JedisConnectionFactory connectionFactory() {
-//        return new JedisConnectionFactory(connectionConfiguration());
-//    }
-
 
     @Bean(name = "ItemCacheTemplate")
     public RedisTemplate<String, Item> itemTemplate(){

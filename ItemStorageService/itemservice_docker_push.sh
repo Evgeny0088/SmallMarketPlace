@@ -8,7 +8,7 @@ DOCKER_IMAGE='evgeny88docker/itemstorage-service:1.0'
 
 echo -e "start to create jar file... ${JAR}"
 
-if ! ./gradlew clean build; then
+if ! ./gradlew -x test clean build --no-parallel; then
    echo -e "fails to create a jar file... ${UPSET}"
 else
    echo -e "jar is created!... ${LAUGH}\n"

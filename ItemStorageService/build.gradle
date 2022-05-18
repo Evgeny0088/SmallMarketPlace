@@ -1,8 +1,6 @@
 plugins {
     id 'idea'
     id 'java'
-    id 'groovy'
-    id "nebula.integtest" version "9.6.3"
     id 'org.springframework.boot' version '2.6.2'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
@@ -68,9 +66,9 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-engine"
     testImplementation "org.junit.jupiter:junit-jupiter-params"
     testImplementation 'com.github.tomakehurst:wiremock:2.27.2'
+    testImplementation 'com.github.tomakehurst:wiremock-jre8:2.32.0'
     testImplementation 'ch.qos.logback:logback-classic'
     testImplementation 'com.smallmarketplace:requestBodyParser-starter:1.0:all'
-
 }
 
 dependencyManagement {
@@ -79,24 +77,21 @@ dependencyManagement {
     }
 }
 
-integrationTest{
+//######### TEST TASKS ##########
+
+tasks.named('test') {
     useJUnitPlatform()
 }
 
-//######### TEST TASKS ##########
-
-plugins.apply("nebula.integtest")
-facets {
-    integTest {
-        parentSourceSet = 'main'
-        testTaskName = 'integrationTest'
-        includeInCheckLifecycle = false
-    }
+task brandWireMockTest(type: Test) {
+    description("tests of BrandControllerWireMockTest controller layer")
+    filter { includeTestsMatching 'com.marketplace.itemstorageservice.controller.BrandControllerWireMockTest' }
+    useJUnitPlatform()
 }
 
-task wireMockTests(type: Test) {
-    description("batch of tests of rest-api via wiremock server and webtest client")
-    filter { includeTestsMatching 'com.marketplace.itemstorageservice.controller.*' }
+task itemWireMockTest(type: Test) {
+    description("tests of ItemControllerWireMockTest controller layer")
+    filter { includeTestsMatching 'com.marketplace.itemstorageservice.controller.ItemControllerWireMockTest' }
     useJUnitPlatform()
 }
 
@@ -126,7 +121,8 @@ task itemUpdate(type: Test) {
 }
 
 task testsRun(type:Test){
-    dependsOn(tasks.named('wireMockTests'))
+    dependsOn(tasks.named('brandWireMockTest'))
+    dependsOn(tasks.named('itemWireMockTest'))
     dependsOn(tasks.named('brandService'))
     dependsOn(tasks.named('itemCreation'))
     dependsOn(tasks.named('itemDeletion'))
@@ -142,15 +138,6 @@ var service_version = '1.0'
 var jar_name = 'itemstorage-service'
 var spring_profile='spring.profiles.active'
 var profile_value='dev'
-
-task ItemStorageShadow(type: Jar, dependsOn: shadowJar) {
-    archiveBaseName.set("${jar_name}-shadowJar")
-    archiveVersion.set("${service_version}")
-    manifest {
-        attributes 'Main-Class': 'com.marketplace.itemstorageservice.ItemStorageServiceApplication.java'
-    }
-    from zipTree(shadowJar.archiveFile)
-}
 
 bootJar {
     archiveFileName.set("${jar_name}-boot-${service_version}.jar")
@@ -169,4 +156,6 @@ tasks.register("rundev") {
     finalizedBy("bootRun")
 }
 
-tasks.build.dependsOn(tasks.named("testsRun"))
+jar{
+    enabled(false)
+}

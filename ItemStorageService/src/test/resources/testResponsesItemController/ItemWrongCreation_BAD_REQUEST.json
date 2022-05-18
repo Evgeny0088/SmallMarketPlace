@@ -3,6 +3,6 @@
   "description": [
     "any error message place holder"
   ],
-  "status": "BAD_REQUEST",
+  "status": 400,
   "errorTime": "2022-03-28 Local Time: 06:00"
 }

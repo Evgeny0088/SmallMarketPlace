@@ -3,7 +3,7 @@ package com.marketplace.itemstorageservice.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.marketplace.itemstorageservice.configs.WireMockConfig;
+import com.marketplace.itemstorageservice.configs.ServiceTestConfig;
 import com.marketplace.itemstorageservice.models.Item;
 import com.marketplace.itemstorageservice.services.ItemServiceImpl;
 import com.smallmarketplace.RequestBodyParser;
@@ -17,20 +17,24 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import static com.marketplace.itemstorageservice.utilFunctions.WireMocks.*;
+
+import static com.marketplace.itemstorageservice.utilFunctions.WireMockClientResponses.*;
+import static com.marketplace.itemstorageservice.utilFunctions.WireMockServers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
-@ActiveProfiles("wiremock-test")
-@ContextConfiguration(classes = {WireMockConfig.class})
+@ActiveProfiles("test")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ContextConfiguration(initializers = ServiceTestConfig.Initializer.class, classes = {ServiceTestConfig.class})
 class ItemControllerWireMockTest {
 
     private static final String URI_ITEMS = "/items";
@@ -63,7 +67,7 @@ class ItemControllerWireMockTest {
         String serialized = objectMapper.writeValueAsString(itemService.allItems());
         //then
         wireMockServer_GET_With_OK_ResourceBody(itemWireMockServer, RESOURCE_FILE_BAD_REQUEST_JSON, URI_ITEMS);
-        webTestClient_GET_With_OK_JsonBody(webTestClient, URI_ITEMS, serialized);
+        webTestClient_GET_With_OK_JsonBody(webTestClient, URI_ITEMS);
     }
 
     @DisplayName("create new Item with valid params in request body")
@@ -103,7 +107,7 @@ class ItemControllerWireMockTest {
         //then
         wireMockServer_POST_With_BAD_REQUEST(itemWireMockServer, RESOURCE_FILE_BAD_REQUEST_JSON, URI_NEW_ITEM);
         webTestClient_POST_With_BAD_REQUEST(webTestClient,requestBody, URI_NEW_ITEM, errorStatus);
-        Mockito.verify(itemService,never()).createNewItem(Mockito.any(Item.class));
+        Mockito.verify(itemService,never()).createNewItem(any(Item.class));
     }
 
     @DisplayName("update new Item valid params in request body")
@@ -146,7 +150,7 @@ class ItemControllerWireMockTest {
         //then
         wireMockServer_POST_With_BAD_REQUEST(itemWireMockServer,RESOURCE_FILE_BAD_REQUEST_JSON, uri);
         webTestClient_POST_With_BAD_REQUEST(webTestClient,requestBody, uri, errorStatus);
-        Mockito.verify(itemService,never()).createNewItem(Mockito.any(Item.class));
+        Mockito.verify(itemService,never()).createNewItem(any(Item.class));
     }
 
     @DisplayName("""

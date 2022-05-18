@@ -1,41 +1,31 @@
 package com.marketplace.itemstorageservice.configs;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.util.TestPropertyValues;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.event.ContextClosedEvent;
 
-import java.util.Map;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 
-@TestConfiguration
-public class WireMockConfig implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+public abstract class WireMockConfig {
 
-    @Bean
-    public WireMockServer wireMockServer(){
-        return new WireMockServer();
+    public static WireMockServer getWireMockServer(){
+        return new WireMockServer(options().dynamicPort().dynamicHttpsPort());
+    }
+
+    @BeforeAll
+    public static void init(){
+        getWireMockServer().start();
     }
 
     @BeforeEach
     void clearWireMock() {
-        wireMockServer().resetAll();
+        getWireMockServer().resetAll();
     }
 
-    @Override
-    public void initialize(ConfigurableApplicationContext applicationContext) {
-        wireMockServer().start();
-        applicationContext.addApplicationListener(event -> {
-            if (event instanceof ContextClosedEvent){
-                wireMockServer().stop();
-            }
-        });
-        applicationContext.getBeanFactory()
-                .registerSingleton("brandWireMock", wireMockServer());
-        TestPropertyValues.of(Map.of(
-                "base_url", wireMockServer().baseUrl()))
-                .applyTo(applicationContext);
+    @AfterAll
+    public static void destroy(){
+        getWireMockServer().stop();
     }
+
 }

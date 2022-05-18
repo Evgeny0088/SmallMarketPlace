@@ -1,0 +1,15 @@
+ARG DOCKERHUB=docker.io
+
+FROM ${DOCKERHUB}/gradle:7.4.0-jdk17-alpine AS build
+WORKDIR /home/gradle/src
+COPY --chown=gradle:gradle *.gradle gradle/ gradle.* gradlew ./
+RUN gradle build --no-daemon> /dev/null 2>&1 || true
+COPY . ./
+RUN gradle -x test build
+
+FROM ${DOCKERHUB}/openjdk:17-alpine
+ARG JAR_FILE=itemstorage-service-boot-1.0.jar
+RUN mkdir /app
+EXPOSE 8081
+COPY --from=build /home/gradle/src/build/libs/${JAR_FILE} /app/itemstorage-service-boot-1.0.jar
+ENTRYPOINT ["java","-jar","-Dspring.profiles.active=dev", "/itemstorage-service-boot-1.0.jar"]

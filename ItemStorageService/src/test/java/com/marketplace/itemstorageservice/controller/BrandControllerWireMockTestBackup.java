@@ -3,7 +3,8 @@ package com.marketplace.itemstorageservice.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.marketplace.itemstorageservice.configs.ServiceTestConfig;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import com.marketplace.itemstorageservice.configs.WireMockConfig;
 import com.marketplace.itemstorageservice.models.BrandName;
 import com.marketplace.itemstorageservice.services.BrandService;
 import org.junit.jupiter.api.Assertions;
@@ -15,13 +16,12 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.io.IOException;
 
@@ -30,14 +30,13 @@ import static com.marketplace.itemstorageservice.utilFunctions.WireMockServers.*
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@WireMockTest
+@WebFluxTest(controllers = {BrandController.class, ResponseEntityExceptionHandler.class})
 @AutoConfigureWebTestClient
 @ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ContextConfiguration(initializers = ServiceTestConfig.Initializer.class, classes = {ServiceTestConfig.class})
-class BrandControllerWireMockTest {
+public class BrandControllerWireMockTestBackup extends WireMockConfig {
 
-    private static final Logger logger = LoggerFactory.getLogger(BrandControllerWireMockTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(BrandControllerWireMockTestBackup.class);
     private static final String URI_BRANDS = "/brands";
     private static final String URI_NEW_BRAND = "/brands/new";
     private static final String URI_UPDATE_BRAND = "/brands/update?brand_name=%s";
@@ -45,31 +44,29 @@ class BrandControllerWireMockTest {
     private static final String RESOURCE_FILE_ALL_BRANDS_JSON = "testResponsesBrandController/allBrands.json";
     private static final String RESOURCE_FILE_BAD_REQUEST_JSON = "testResponsesItemController/ItemWrongCreation_BAD_REQUEST.json";
 
-    @Autowired
-    WireMockServer brandWireMockServer;
+    private static final WireMockServer wireMockServer = WireMockConfig.getWireMockServer();
 
     @Autowired
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
+
+    @MockBean
+    private BrandService brandService;
 
     @Autowired
     private WebTestClient webTestClient;
 
-    @MockBean
-    BrandService brandService;
-
     @Test
     @DisplayName("connection test whether wiremock is running or not")
     void wireMockHealthCheck() {
-        brandWireMockServer.isRunning();
+        wireMockServer.isRunning();
         logger.info("wire mock is running!>>>>>>>>>");
     }
 
     @Test
     @DisplayName("get all brands from database")
-    void allBrandsTest() throws JsonProcessingException {
+    void allBrandsTest() {
         //when
-        String serialized = objectMapper.writeValueAsString(brandService.allBrands());
-        wireMockServer_GET_With_OK_ResourceBody(brandWireMockServer,RESOURCE_FILE_ALL_BRANDS_JSON, URI_BRANDS);
+        wireMockServer_GET_With_OK_ResourceBody(wireMockServer,RESOURCE_FILE_ALL_BRANDS_JSON, URI_BRANDS);
         //then
         webTestClient_GET_With_OK_JsonBody(webTestClient, URI_BRANDS);
     }
@@ -83,8 +80,8 @@ class BrandControllerWireMockTest {
         String requestBody = objectMapper.writeValueAsString(newBrand);
         String returnMessage = "new brand successfully added with id 1!";
         //when
-        when(brandService.postNewBrandName(Mockito.any(BrandName.class))).thenReturn(newBrand);
-        wireMockServer_POST_With_OK_ReturnMessage(brandWireMockServer, returnMessage, URI_NEW_BRAND);
+        when(brandService.postNewBrandName(any(BrandName.class))).thenReturn(newBrand);
+        wireMockServer_POST_With_OK_ReturnMessage(wireMockServer, returnMessage, URI_NEW_BRAND);
         String actual = webTestClient_POST_With_OK_ReturnMessage(webTestClient, requestBody, URI_NEW_BRAND);
         //then
         Assertions.assertTrue(actual.contains(returnMessage));
@@ -101,7 +98,7 @@ class BrandControllerWireMockTest {
         String errorStatus = "BAD_REQUEST";
 
         //when and then:)
-        wireMockServer_POST_With_BAD_REQUEST(brandWireMockServer, RESOURCE_FILE_BAD_REQUEST_JSON,URI_NEW_BRAND);
+        wireMockServer_POST_With_BAD_REQUEST(wireMockServer, RESOURCE_FILE_BAD_REQUEST_JSON,URI_NEW_BRAND);
         webTestClient_POST_With_BAD_REQUEST(webTestClient, requestBody, URI_NEW_BRAND, errorStatus);
 
         Mockito.verify(brandService, times(0)).postNewBrandName(Mockito.any());
@@ -120,7 +117,7 @@ class BrandControllerWireMockTest {
 
         //when
         doNothing().when(brandService).updateBrand(any(String.class),any(BrandName.class));
-        wireMockServer_POST_With_OK_ReturnMessage(brandWireMockServer, returnMessage, uri);
+        wireMockServer_POST_With_OK_ReturnMessage(wireMockServer, returnMessage, uri);
         String actual = webTestClient_POST_With_OK_ReturnMessage(webTestClient, requestBody, uri);
 
         //then
@@ -137,7 +134,7 @@ class BrandControllerWireMockTest {
         String requestBody = objectMapper.writeValueAsString(brandNameFromDB);
         String errorStatus = "BAD_REQUEST";
         //when
-        wireMockServer_POST_With_BAD_REQUEST(brandWireMockServer, RESOURCE_FILE_BAD_REQUEST_JSON, uri);
+        wireMockServer_POST_With_BAD_REQUEST(wireMockServer, RESOURCE_FILE_BAD_REQUEST_JSON, uri);
         webTestClient_POST_With_BAD_REQUEST(webTestClient, requestBody, uri, errorStatus);
         //then
         Mockito.verify(brandService, times(0)).updateBrand(any(String.class),any());
@@ -154,12 +151,12 @@ class BrandControllerWireMockTest {
         if (brandId.matches("\\d")){
             String returnMessage = String.format("brand with <%s> is deleted!", brandId);
             when(brandService.brandDeleted(Long.parseLong(brandId))).thenReturn(returnMessage);
-            wireMockServer_GET_With_OK_ReturnMessage(brandWireMockServer, returnMessage, uri);
+            wireMockServer_GET_With_OK_ReturnMessage(wireMockServer, returnMessage, uri);
             webTestClient_GET_With_OK_ResponseBody(webTestClient, uri);
             times = 1;
         }else {
             String errorStatus = "BAD_REQUEST";
-            wireMockServer_GET_With_BAD_REQUEST(brandWireMockServer, RESOURCE_FILE_BAD_REQUEST_JSON, uri);
+            wireMockServer_GET_With_BAD_REQUEST(wireMockServer, RESOURCE_FILE_BAD_REQUEST_JSON, uri);
             webTestClient_GET_With_BAD_REQUEST(webTestClient, uri, errorStatus);
         }
         //then
