@@ -52,7 +52,7 @@ spec:
                   name: redis-secrets
                   key: REDIS_PASS
             - name: spring.redis.host
-              value: {{REDIS_HOSTNAME}}
+              value: REDIS_HOSTNAME
             - name: spring.redis.ulr
               value: "redis://redis-primary-svc.default.svc.cluster.local:6379"
             - name: GET_HOSTS_FROM

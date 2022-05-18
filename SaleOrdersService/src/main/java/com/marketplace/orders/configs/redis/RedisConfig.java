@@ -32,32 +32,13 @@ public class RedisConfig {
     //for k8s connection
     @Bean
     public JedisConnectionFactory jedisConnectionFactoryUpdated() {
-        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
-        redisStandaloneConfiguration.setHostName("172.17.0.9");
-        redisStandaloneConfiguration.setPort(port);
+        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(host, port);
         redisStandaloneConfiguration.setPassword(password);
-
         JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfiguration = JedisClientConfiguration.builder();
         jedisClientConfiguration.connectTimeout(Duration.ofSeconds(60));// 60s connection timeout
         jedisClientConfiguration.usePooling();
-        return new JedisConnectionFactory(redisStandaloneConfiguration,
-                jedisClientConfiguration.build());
+        return new JedisConnectionFactory(redisStandaloneConfiguration, jedisClientConfiguration.build());
     }
-
-    // for docker local docker run
-//    @Bean
-//    @Primary
-//    RedisStandaloneConfiguration connectionConfiguration(){
-//        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
-//        config.setPassword(password);
-//        return config;
-//    }
-//
-//    @Bean
-//    public JedisConnectionFactory connectionFactory() {
-//        return new JedisConnectionFactory(connectionConfiguration());
-//    }
-
 
     @Bean(name = "ItemDetailedDTOPackages")
     public RedisTemplate<String, ItemDetailedInfoDTO> itemPackagesTemplate(){
