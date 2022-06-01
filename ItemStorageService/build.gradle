@@ -4,6 +4,9 @@ plugins {
     id 'org.springframework.boot' version '2.6.2'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'jacoco'
+    id 'org.sonarqube' version '3.3'
+    id 'com.avast.gradle.docker-compose' version '0.14.3'
 }
 
 group = 'com.marketplace'
@@ -77,6 +80,50 @@ dependencyManagement {
     }
 }
 
+//######### Jacoco TASKS ########
+
+sonarqube {
+    properties {
+        property 'sonar.host.url', 'http://localhost:9000'
+    }
+}
+
+jacoco {
+    toolVersion = "0.8.7"
+    reportsDirectory = layout.buildDirectory.dir('jacocoReports')
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.5
+            }
+        }
+
+        rule {
+            failOnViolation(true)
+            enabled = true
+            element = 'CLASS'
+            includes = ['com.marketplace.itemstorageservice.services.*']
+
+            limit {
+                counter = 'LINE'
+                value = 'TOTALCOUNT'
+                minimum = 0.3
+            }
+        }
+    }
+}
+
 //######### TEST TASKS ##########
 
 tasks.named('test') {
@@ -121,6 +168,7 @@ task itemUpdate(type: Test) {
 }
 
 task testsRun(type:Test){
+    group = "verification"
     dependsOn(tasks.named('brandWireMockTest'))
     dependsOn(tasks.named('itemWireMockTest'))
     dependsOn(tasks.named('brandService'))
@@ -132,12 +180,21 @@ task testsRun(type:Test){
     }
 }
 
+brandWireMockTest.finalizedBy jacocoTestReport
+
+tasks.named('sonarqube').configure {
+    dependsOn brandWireMockTest
+}
+
+//brandWireMockTest.dependsOn jacocoTestCoverageVerification
+
 //######### JAR TASKS ##########
 
 var service_version = '1.0'
 var jar_name = 'itemstorage-service'
 var spring_profile='spring.profiles.active'
-var profile_value='dev'
+var profile_dev='dev'
+var profile_local='local'
 
 bootJar {
     archiveFileName.set("${jar_name}-boot-${service_version}.jar")
@@ -150,7 +207,18 @@ tasks.register("rundev") {
     description = "Runs the Spring Boot application with the dev profile"
     doFirst {
         tasks.bootRun.configure {
-            systemProperty("${spring_profile}", "${profile_value}")
+            systemProperty("${spring_profile}", "${profile_dev}")
+        }
+    }
+    finalizedBy("bootRun")
+}
+
+tasks.register("runlocal") {
+    group = "application"
+    description = "Runs the Spring Boot application with the local profile"
+    doFirst {
+        tasks.bootRun.configure {
+            systemProperty("${spring_profile}", "${profile_local}")
         }
     }
     finalizedBy("bootRun")
