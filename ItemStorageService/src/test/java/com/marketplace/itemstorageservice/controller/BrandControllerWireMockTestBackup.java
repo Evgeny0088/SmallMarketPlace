@@ -8,6 +8,7 @@ import com.marketplace.itemstorageservice.configs.WireMockConfig;
 import com.marketplace.itemstorageservice.models.BrandName;
 import com.marketplace.itemstorageservice.services.BrandService;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,6 +31,7 @@ import static com.marketplace.itemstorageservice.utilFunctions.WireMockServers.*
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@Disabled
 @WireMockTest
 @WebFluxTest(controllers = {BrandController.class, ResponseEntityExceptionHandler.class})
 @AutoConfigureWebTestClient
