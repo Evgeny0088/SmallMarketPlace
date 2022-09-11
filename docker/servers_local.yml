@@ -9,7 +9,7 @@ services:
       POSTGRES_DB: "${POSTGRES_ITEMSTORAGE:-demoDB}"
       POSTGRES_HOST: itemstorageDB
     ports:
-      - "5433:5432"
+      - "5435:5432"
     restart: always
     networks:
       - proxynet
@@ -57,7 +57,7 @@ services:
       - proxynet
 
   redis:
-    image: redis
+    image: redis:7.0.2
     container_name: redis_cache
     hostname: ${REDIS_HOST:-localhost}
     ports:
@@ -81,6 +81,13 @@ services:
       - "9411"
     networks:
       - proxynet
+
+  sonarqube:
+    image: sonarqube:lts
+    ports:
+      - 9005:9000
+    environment:
+      - SONAR_FORCEAUTHENTICATION=false
 
 networks:
   proxynet:

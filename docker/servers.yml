@@ -84,6 +84,13 @@ services:
     networks:
       - proxynet
 
+  sonarqube:
+    image: sonarqube:lts
+    ports:
+      - 9005:9000
+    environment:
+      - SONAR_FORCEAUTHENTICATION=false
+
 networks:
   proxynet:
     external:

@@ -34,7 +34,7 @@ public class RedisConfig {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(host, port);
         redisStandaloneConfiguration.setPassword(password);
         JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfiguration = JedisClientConfiguration.builder();
-        jedisClientConfiguration.connectTimeout(Duration.ofSeconds(60));// 60s connection timeout
+        jedisClientConfiguration.connectTimeout(Duration.ofSeconds(0));
         jedisClientConfiguration.usePooling();
         return new JedisConnectionFactory(redisStandaloneConfiguration, jedisClientConfiguration.build());
     }

@@ -85,15 +85,6 @@ dependencyManagement {
 sonarqube {
     properties {
         property 'sonar.host.url', 'http://localhost:9000'
-        property "sonar.sourceEncoding", "UTF-8"
-        property 'sonar.projectName', 'ItemStorage-Service'
-        property 'sonar.projectKey', 'ItemStorage-Service'
-        property 'sonar.core.codeCoveragePlugin', 'jacoco'
-        property 'sonar.coverage.jacoco.xmlReportPaths', "${project.buildDir}/coverage/jacoco.xml"
-//        property "sonar.jacoco.reportPath", "${project.buildDir}/jacoco/brandWireMockTest.exec"
-//        property "sonar.coverage.jacoco.xmlReportPaths", "${project.buildDir}/jacoco/brandWireMockTest.exec"
-//        property "sonar.groovy.jacoco.reportPath", "${project.buildDir}/jacoco/test.exec"
-//        property "sonar.groovy.binaries", "${sourceSets.main.output.classesDirs}"
     }
 }
 
@@ -118,13 +109,11 @@ jacocoTestCoverageVerification {
                 minimum = 0.5
             }
         }
-
         rule {
-            failOnViolation(true)
+            failOnViolation(false)
             enabled = true
             element = 'CLASS'
             includes = ['com.marketplace.itemstorageservice.*']
-
             limit {
                 counter = 'LINE'
                 value = 'TOTALCOUNT'
@@ -177,10 +166,10 @@ task testsRun(type:Test){
     useJUnitPlatform()
     dependsOn(tasks.named('brandWireMockTest'))
     dependsOn(tasks.named('itemWireMockTest'))
-//    dependsOn(tasks.named('brandService'))
-//    dependsOn(tasks.named('itemCreation'))
-//    dependsOn(tasks.named('itemDeletion'))
-//    dependsOn(tasks.named('itemUpdate'))
+    dependsOn(tasks.named('brandService'))
+    dependsOn(tasks.named('itemCreation'))
+    dependsOn(tasks.named('itemDeletion'))
+    dependsOn(tasks.named('itemUpdate'))
     testLogging {
         events "passed", "failed", "skipped"
     }
@@ -194,8 +183,6 @@ tasks.named('test') {
 tasks.named('sonarqube').configure {
     dependsOn test
 }
-
-//brandWireMockTest.dependsOn jacocoTestCoverageVerification
 
 //######### JAR TASKS ##########
 
